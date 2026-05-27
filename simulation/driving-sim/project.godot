@@ -1,0 +1,41 @@
+; Engine configuration.
+[application]
+config/name="Driving Sim"
+config/description="MVP driving simulation for training platform"
+run/main_scene="res://Scenes/Main.tscn"
+config/features=PackedStringArray("4.0", "C#")
+config/version="0.1.0-mvp"
+config/timestamp_on_launch=false
+
+[rendering]
+renderer/rendering_method="forward_plus"
+environment/defaults/default_clear_color=Color(0.38, 0.61, 0.84, 1)
+
+[input]
+ui_accept={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"command_or_control_autoremap":false,"ctrl_pressed":false,"keycode":4194309,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"pressed":true,"canceled":false,"meta_pressed":false)]
+}
+move_forward={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"command_or_control_autoremap":false,"ctrl_pressed":false,"keycode":87,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"pressed":true,"canceled":false,"meta_pressed":false)]
+}
+move_backward={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"command_or_control_autoremap":false,"ctrl_pressed":false,"keycode":83,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"pressed":true,"canceled":false,"meta_pressed":false)]
+}
+move_left={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"command_or_control_autoremap":false,"ctrl_pressed":false,"keycode":65,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"pressed":true,"canceled":false,"meta_pressed":false)]
+}
+move_right={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"command_or_control_autoremap":false,"ctrl_pressed":false,"keycode":68,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"pressed":true,"canceled":false,"meta_pressed":false)]
+}
+brake={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"command_or_control_autoremap":false,"ctrl_pressed":false,"keycode":32,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"pressed":true,"canceled":false,"meta_pressed":false)]
+}
+
+[dotnet]
+project/assembly_name="driving-sim"

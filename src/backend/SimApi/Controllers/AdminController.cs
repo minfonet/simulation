@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SimApi.Data;
 using SimApi.DTOs;
 using SimApi.Models;
+using SimApi.Services;
 
 namespace SimApi.Controllers;
 
@@ -13,10 +14,12 @@ namespace SimApi.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly IPasswordService _password;
 
-    public AdminController(AppDbContext db)
+    public AdminController(AppDbContext db, IPasswordService password)
     {
         _db = db;
+        _password = password;
     }
 
     [HttpGet("organizations")]
@@ -74,7 +77,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("organizations/{id}/users")]
-    public async Task<ActionResult<List<User>>> GetOrganizationUsers(Guid id)
+    public async Task<ActionResult> GetOrganizationUsers(Guid id)
     {
         var users = await _db.Users
             .Where(u => u.OrganizationId == id)
@@ -102,7 +105,7 @@ public class AdminController : ControllerBase
         var user = new User
         {
             Email = request.Email,
-            PasswordHash = new Services.PasswordService().Hash(request.Password),
+            PasswordHash = _password.Hash(request.Password),
             Name = request.Name,
             Role = role,
             OrganizationId = id

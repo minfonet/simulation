@@ -1,34 +1,31 @@
 # Architecture
 
-## Recommended Stack
+## MVP Stack (current)
 
-### Simulation Engine
-- Godot 4
-- C#
+| Layer | Technology | Version |
+|---|---|---|
+| Simulation Engine | Godot + C# | 4.x |
+| Backend API | ASP.NET Core | 8+ |
+| Frontend | Next.js + TypeScript | 16 |
+| UI Framework | Tailwind CSS | 4 |
+| Database | PostgreSQL | 16 |
+| ORM | Entity Framework Core | 8+ |
+| Authentication | JWT (access + refresh tokens) | — |
+| Telemetry | REST batch polling | — |
+| Infrastructure | Docker Compose | — |
 
-### Backend
-- ASP.NET Core
+## Post-MVP (planned)
 
-### Frontend
-- Next.js
-- TypeScript
-
-### Database
-- PostgreSQL
-
-### Telemetry
-- TimescaleDB
-
-### Realtime
-- SignalR
-- WebSockets
-
-### Infrastructure
-- Docker
+| Technology | Replaces |
+|---|---|
+| TimescaleDB | Vanilla PostgreSQL for telemetry |
+| SignalR + WebSockets | REST polling for realtime |
+| Hardware abstraction layer | Manual input only |
+| AI evaluation system | Instructor-only evaluation |
 
 ## Architecture Goals
 - modularity
 - scalability
 - hardware abstraction
-- realtime telemetry
+- realtime telemetry (post-MVP)
 - persistent operational data

@@ -1,0 +1,78 @@
+[gd_scene load_steps=10 format=3 uid="uid://drivingsim_main"]
+
+[ext_resource type="Script" path="res://Scripts/VehicleController.cs" id="1"]
+
+[sub_resource type="BoxMesh" id="2"]
+size = Vector3(2, 0.8, 4)
+
+[sub_resource type="BoxShape3D" id="3"]
+size = Vector3(2, 0.8, 4)
+
+[sub_resource type="PlaneMesh" id="4"]
+size = Vector2(100, 100)
+
+[sub_resource type="BoxShape3D" id="5"]
+size = Vector3(100, 0.2, 100)
+
+[sub_resource type="BoxMesh" id="6"]
+size = Vector3(1.5, 2, 1.5)
+
+[sub_resource type="BoxShape3D" id="7"]
+size = Vector3(1.5, 2, 1.5)
+
+[sub_resource type="BoxMesh" id="8"]
+size = Vector3(1.5, 1.5, 1.5)
+
+[sub_resource type="BoxShape3D" id="9"]
+size = Vector3(1.5, 1.5, 1.5)
+
+[node name="World" type="Node3D"]
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+light_energy = 1.0
+shadow_enabled = true
+rotation = Vector3(-0.5, 0.7, 0)
+
+[node name="Ground" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.1, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource(4)
+
+[node name="Collision" type="CollisionShape3D" parent="Ground"]
+shape = SubResource(5)
+
+[node name="Car" type="RigidBody3D" parent="."]
+position = Vector3(0, 0.8, 0)
+script = ExtResource("1")
+gravity_scale = 1.0
+
+[node name="BodyMesh" type="MeshInstance3D" parent="Car"]
+mesh = SubResource(2)
+
+[node name="BodyCollision" type="CollisionShape3D" parent="Car"]
+shape = SubResource(3)
+
+[node name="CameraPivot" type="Node3D" parent="Car"]
+position = Vector3(0, 3, 6)
+
+[node name="Camera" type="Camera3D" parent="Car/CameraPivot"]
+current = true
+
+[node name="Obstacle1" type="StaticBody3D" parent="."]
+position = Vector3(8, 1, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Obstacle1"]
+mesh = SubResource(6)
+
+[node name="Collision" type="CollisionShape3D" parent="Obstacle1"]
+shape = SubResource(7)
+
+[node name="Obstacle2" type="StaticBody3D" parent="."]
+position = Vector3(-8, 0.75, 5)
+
+[node name="Mesh" type="MeshInstance3D" parent="Obstacle2"]
+mesh = SubResource(8)
+
+[node name="Collision" type="CollisionShape3D" parent="Obstacle2"]
+shape = SubResource(9)

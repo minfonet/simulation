@@ -259,4 +259,10 @@ Every frame (or every N frames):
 Lead, inicia la fase 1 del MVP: scaffolding del backend con ASP.NET Core y Docker Compose
 
 ## Run 2:
-Lead, continúa con el MVP. Siguiente tarea: scaffolding del frontend Next.js"
+Lead, continúa con el MVP. Siguiente tarea: scaffolding del frontend Next.js
+
+## Run 3:
+Lead, continúa con el MVP. Siguiente tarea: scaffolding del simulador Godot 4
+
+## Run 4
+Set up frontend test infrastructure (Vitest) in sim-web, then write and run tests for api.ts, auth-context.tsx, and proxy.ts. Follow the workflow: delegate test infra setup to QA, then delegate test writing to QA, then review. Report coverage results.

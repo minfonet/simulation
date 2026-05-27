@@ -13,6 +13,10 @@
     "reviewer": {
       "description": "Critically evaluates implementations for correctness, maintainability, and security.",
       "mode": "subagent"
+    },
+    "qa": {
+      "description": "Creates and runs tests for all layers (frontend, backend, E2E).",
+      "mode": "subagent"
     }
   }
 }

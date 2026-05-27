@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SimApi.Data;
@@ -106,5 +108,31 @@ public class AuthController : ControllerBase
             Role = user.Role.ToString(),
             OrganizationId = user.OrganizationId
         });
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<ActionResult> GetCurrentUser()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized("Invalid token");
+
+        var user = await _db.Users
+            .Where(u => u.Id == userId)
+            .Select(u => new
+            {
+                userId = u.Id,
+                email = u.Email,
+                name = u.Name,
+                role = u.Role.ToString(),
+                organizationId = u.OrganizationId
+            })
+            .FirstOrDefaultAsync();
+
+        if (user == null)
+            return NotFound("User not found");
+
+        return Ok(user);
     }
 }

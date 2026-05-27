@@ -3,20 +3,20 @@
 ## Prerequisites
 
 ### Required
-| Dependency | Version | Check |
-|---|---|---|
-| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Latest | `docker --version && docker compose version` |
-| [.NET SDK](https://dotnet.microsoft.com/download) | 8.0+ | `dotnet --version` |
-| [Node.js](https://nodejs.org/) | 20+ | `node --version` |
-| [Git](https://git-scm.com/) | Any | `git --version` |
+| Dependency | Version | Check | Status on this machine |
+|---|---|---|---|
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Latest | `docker --version` | ✅ v29.5.2 |
+| [Node.js](https://nodejs.org/) | 20+ | `node --version` | ✅ v24 |
+| [Git](https://git-scm.com/) | Any | `git --version` | ✅ |
+| [.NET SDK](https://dotnet.microsoft.com/download) | 10.0+ | `dotnet --version` | ❌ NO INSTALADO |
+| [Godot 4 .NET](https://godotengine.org/download) | 4.x | `godot --version` | ❌ NO INSTALADO |
 
 ### Optional
-| Tool |用途 |
-|---|---|
-| [Godot 4 .NET](https://godotengine.org/download) | Open/simulation project (`simulation/driving-sim/`) |
-| [VS Code](https://code.visualstudio.com/) + C# extension | Edit/debug backend |
-| [Rider](https://www.jetbrains.com/rider/) | .NET IDE (alternative to VS) |
-| [pgAdmin](https://www.pgadmin.org/) | Browse PostgreSQL directly |
+| Tool | Purpose | Status |
+|---|---|---|
+| [VS Code](https://code.visualstudio.com/) + C# Dev Kit | Edit / debug backend | ✅ VS Code v1.121, ❌ C# Dev Kit |
+| [Rider](https://www.jetbrains.com/rider/) | .NET IDE | ❌ |
+| [pgAdmin](https://www.pgadmin.org/) | Browse PostgreSQL directly | ❌ |
 
 ---
 
@@ -27,19 +27,26 @@
 docker compose -f docker/docker-compose.yml up --build
 ```
 
-This starts:
-- **PostgreSQL 16** on `localhost:5432`
-- **Backend API** on `http://localhost:8080`
+This starts three services:
+
+| Service | Port | Description |
+|---|---|---|
+| `db` | `5432` | PostgreSQL 16 |
+| `backend` | `8080` | ASP.NET Core 10 API |
+| `frontend` | `3000` | Next.js 16 web app |
 
 The API auto-creates tables on first run (`EnsureCreated`).
 
+Once running:
+- **Frontend**: http://localhost:3000
+- **API**: http://localhost:8080
+- **PostgreSQL**: `localhost:5432` (user: `postgres`, password: `postgres`, db: `simulation`)
+
 ---
 
-## Running Backend Locally (without Docker)
+## Running Each Part Locally
 
-### 1. Start PostgreSQL
-
-Using Docker for just the database:
+### 1. Database only (Docker)
 
 ```bash
 docker run -d --name sim-db ^
@@ -50,7 +57,7 @@ docker run -d --name sim-db ^
   postgres:16
 ```
 
-### 2. Restore & Run
+### 2. Backend (ASP.NET Core)
 
 ```bash
 cd src/backend/SimApi
@@ -58,70 +65,184 @@ dotnet restore
 dotnet run
 ```
 
-The API will be available at `http://localhost:5000` (or `https://localhost:5001`).
+The API will be available at `http://localhost:5000`.
 
-### 3. Verify
+> The backend reads the connection string from `appsettings.json`. By default it points to `localhost:5432`. If you changed the DB port, update the connection string.
 
-```bash
-# Health check — should return 200
-curl http://localhost:5000/api/auth/login -X POST ^
-  -H "Content-Type: application/json" ^
-  -d "{\"email\":\"test\",\"password\":\"test\"}"
-```
-
----
-
-## Running Frontend Locally
-
-### 1. Install dependencies
+### 3. Frontend (Next.js 16)
 
 ```bash
 cd src/frontend/sim-web
 npm install
-```
-
-### 2. Start dev server
-
-```bash
 npm run dev
 ```
 
 Opens at `http://localhost:3000`.
 
-### 3. Configure API URL
-
-Set `NEXT_PUBLIC_API_URL` in `.env.local`:
+The frontend reads `NEXT_PUBLIC_API_URL` from `.env.local`:
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
+> The `.env.local` file is already created. Update the URL if your backend runs on a different port.
+
+### 4. Godot simulation
+
+```bash
+# Open in editor
+godot simulation/driving-sim/project.godot
+
+# Run from editor (F5) — requires session-id argument in Godot editor CLI args
+# Or export and run standalone:
+godot --headless --export-release Windows desktop/SimDriver.exe
+./desktop/SimDriver.exe --session-id <guid> --token <jwt> --api-url http://localhost:8080
+```
+
+The simulation accepts three CLI arguments:
+| Argument | Required | Description |
+|---|---|---|
+| `--session-id` | Yes | GUID of the simulation session to join |
+| `--token` | No | JWT access token for authenticated endpoints |
+| `--api-url` | No | Backend URL (default: `http://localhost:8080`) |
+
 ---
 
-## Running the Godot Simulation
+## Testing
 
-### 1. Open the project
+### Frontend (sim-web)
 
-Open Godot 4, click **Import**, navigate to `simulation/driving-sim/` and select `project.godot`.
-
-### 2. Run from editor
-
-Press **F5** (or click Play). The simulation expects a `sessionId` argument:
-
-```
-godot --session-id <guid>
-```
-
-### 3. Export standalone
+The frontend uses **Vitest** + **Testing Library** for unit tests.
 
 ```bash
-godot --headless --export-release Windows desktop/SimDriver.exe
+cd src/frontend/sim-web
+
+# Run all tests once
+npm test
+
+# Run in watch mode (re-runs on file changes)
+npm run test:watch
 ```
 
-### 4. Launch with session
+#### What's tested
+
+| Test file | Coverage | Tests |
+|---|---|---|
+| `lib/__tests__/api.test.ts` | API client (`api.ts`): auth header injection, 401 refresh flow, concurrent 401 queuing, 204 handling, error responses | 10 |
+| `lib/__tests__/auth-context.test.tsx` | `AuthProvider`: loading state, localStorage restore, login/logout, session validation on mount, redirect on failure | 7 |
+| `lib/__tests__/proxy.test.ts` | `proxy.ts`: all routes pass through (auth enforced by backend + AuthProvider) | 6 |
+
+**Requirements:** Node.js (see prerequisites above).
+
+### Backend (SimApi)
+
+No .NET SDK is available on the development machine. xUnit integration tests have been scoped but require a machine with `dotnet` to run.
+
+### Godot Simulation
+
+No Godot 4 runtime is available on the development machine. Script tests are scoped but cannot execute locally.
+
+---
+
+## Complete Happy Path (Manual Test)
+
+### Step 1: Create an organization
 
 ```bash
-SimDriver.exe --session-id 550e8400-e29b-41d4-a716-446655440000
+curl -X POST http://localhost:8080/api/admin/organizations ^
+  -H "Content-Type: application/json" ^
+  -d "{\"name\":\"ABC Driving School\"}"
+```
+
+Save the returned `id` — this is your `OrganizationId`.
+
+### Step 2: Register users
+
+```bash
+# Register Admin
+curl -X POST http://localhost:8080/api/auth/register ^
+  -H "Content-Type: application/json" ^
+  -d "{\"email\":\"admin@abc.com\",\"password\":\"123456\",\"name\":\"Admin\",\"role\":\"Admin\",\"organizationId\":\"<org-id>\"}"
+
+# Register Instructor
+curl -X POST http://localhost:8080/api/auth/register ^
+  -H "Content-Type: application/json" ^
+  -d "{\"email\":\"instructor@abc.com\",\"password\":\"123456\",\"name\":\"Mary\",\"role\":\"Instructor\",\"organizationId\":\"<org-id>\"}"
+
+# Register Trainee
+curl -X POST http://localhost:8080/api/auth/register ^
+  -H "Content-Type: application/json" ^
+  -d "{\"email\":\"trainee@abc.com\",\"password\":\"123456\",\"name\":\"John\",\"role\":\"Trainee\",\"organizationId\":\"<org-id>\"}"
+```
+
+Save each user's `userId` from the responses.
+
+### Step 3: Login as Instructor
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login ^
+  -H "Content-Type: application/json" ^
+  -d "{\"email\":\"instructor@abc.com\",\"password\":\"123456\"}"
+```
+
+Save the `accessToken`.
+
+### Step 4: Create a session (as Instructor)
+
+```bash
+curl -X POST http://localhost:8080/api/instructor/sessions ^
+  -H "Content-Type: application/json" ^
+  -H "Authorization: Bearer <instructor-token>" ^
+  -d "{\"traineeId\":\"<trainee-user-id>\",\"scenario\":\"sharp-turn\"}"
+```
+
+Save the returned session `id`.
+
+### Step 5: Start the session (as Trainee)
+
+```bash
+# Login as trainee
+curl -X POST http://localhost:8080/api/auth/login ^
+  -H "Content-Type: application/json" ^
+  -d "{\"email\":\"trainee@abc.com\",\"password\":\"123456\"}"
+
+# Start session
+curl -X POST http://localhost:8080/api/trainee/sessions/<session-id>/start ^
+  -H "Content-Type: application/json" ^
+  -H "Authorization: Bearer <trainee-token>"
+```
+
+### Step 6: Send telemetry
+
+```bash
+curl -X POST http://localhost:8080/api/telemetry ^
+  -H "Content-Type: application/json" ^
+  -H "Authorization: Bearer <trainee-token>" ^
+  -d "{\"sessionId\":\"<session-id>\",\"points\":[{\"timestamp\":\"2025-01-01T00:00:00Z\",\"speed\":10.5,\"steeringAngle\":0.1,\"positionX\":1.0,\"positionY\":0.0,\"positionZ\":2.0,\"collision\":false}]}"
+```
+
+### Step 7: Finish session (as Trainee)
+
+```bash
+curl -X POST http://localhost:8080/api/trainee/sessions/<session-id>/finish ^
+  -H "Content-Type: application/json" ^
+  -H "Authorization: Bearer <trainee-token>"
+```
+
+### Step 8: Evaluate (as Instructor)
+
+```bash
+curl -X POST http://localhost:8080/api/instructor/sessions/<session-id>/evaluate ^
+  -H "Content-Type: application/json" ^
+  -H "Authorization: Bearer <instructor-token>" ^
+  -d "{\"score\":85,\"comments\":\"Good control, minor lane deviation at turn 3.\"}"
+```
+
+### Step 9: View evaluation (as Trainee)
+
+```bash
+curl -H "Authorization: Bearer <trainee-token>" ^
+  http://localhost:8080/api/trainee/evaluations
 ```
 
 ---
@@ -140,19 +261,18 @@ SimDriver.exe --session-id 550e8400-e29b-41d4-a716-446655440000
 
 1. Open `src/backend/SimApi/SimApi.csproj` or the containing folder
 2. Press **F5** — debugger attaches automatically
-3. Use `launchSettings.json` to switch between IIS Express and Kestrel profiles
+3. Use `Properties/launchSettings.json` to switch between profiles
 
-### Frontend (VS Code / Chrome)
+### Frontend (Chrome DevTools)
 
-1. Run `npm run dev` (or use VS Code's built-in terminal)
+1. Run `npm run dev`
 2. Open Chrome DevTools (**F12**) → **Sources** tab
-3. Set breakpoints in `.tsx` files under `src/`
+3. Set breakpoints in `.tsx` files under `app/` or `components/`
 4. React DevTools extension for component state inspection
 
-### Frontend (VS Code — attach debugger)
+### Frontend (VS Code — attach browser debugger)
 
-1. Install **Debugger for Microsoft Edge** or **Debugger for Chrome**
-2. Use this `.vscode/launch.json`:
+Create `.vscode/launch.json` at the project root:
 
 ```json
 {
@@ -169,6 +289,23 @@ SimDriver.exe --session-id 550e8400-e29b-41d4-a716-446655440000
 }
 ```
 
+### Frontend (Next.js 16 proxy debugging)
+
+The `proxy.ts` file at the project root handles route protection. To debug it:
+
+1. Add `console.log` or use `NextResponse` properties to inspect requests
+2. In dev mode, changes to `proxy.ts` require a dev server restart
+3. The proxy runs on Node.js runtime (not Edge). Standard `console` APIs work
+4. Logs appear in the terminal where `npm run dev` is running
+
+### Godot simulation
+
+1. Open the project in Godot 4 editor
+2. Attach the editor to the running game: **Debugger → Attach to Running Game**
+3. Set breakpoints in C# scripts via the **Mono** tab in the debugger
+4. Use `GD.Print("message")` — output appears in the **Output** panel
+5. For network debugging, check the **Output** panel for `GD.PrintErr` messages from `BackendClient.cs`
+
 ### Docker logs
 
 ```bash
@@ -177,9 +314,11 @@ docker compose -f docker/docker-compose.yml logs -f
 
 # Follow a specific service
 docker compose -f docker/docker-compose.yml logs -f backend
-
-# Follow database
+docker compose -f docker/docker-compose.yml logs -f frontend
 docker compose -f docker/docker-compose.yml logs -f db
+
+# View last N lines
+docker compose -f docker/docker-compose.yml logs --tail=100 backend
 ```
 
 ### Database inspection
@@ -188,42 +327,45 @@ docker compose -f docker/docker-compose.yml logs -f db
 # Direct psql
 docker exec -it sim-db psql -U postgres -d simulation
 
-# Or using pgAdmin
-# Host: localhost, Port: 5432, User: postgres, Password: postgres
-```
+# List tables
+docker exec -it sim-db psql -U postgres -d simulation -c "\dt"
 
-### Common dotnet commands
+# Query users
+docker exec -it sim-db psql -U postgres -d simulation -c "SELECT id, email, name, role FROM \"Users\";"
 
-```bash
-dotnet build              # Compile (without running)
-dotnet run                # Build + run
-dotnet watch run          # Hot reload on file changes
-dotnet test               # Run tests (when added)
-dotnet ef migrations add  # Create EF migration
-dotnet ef database update # Apply migrations
+# Query sessions
+docker exec -it sim-db psql -U postgres -d simulation -c "SELECT id, status, score FROM \"SimulationSessions\";"
+
+# Or use pgAdmin
+# Host: localhost, Port: 5432, User: postgres, Password: postgres, Database: simulation
 ```
 
 ---
 
 ## Docker Compose Reference
 
-| Service | Image | Port | Health check |
-|---|---|---|---|
-| `db` | `postgres:16` | `5432` | `pg_isready` |
-| `backend` | Build from `Dockerfile.backend` | `8080` | — |
-| `frontend` | (future) Build from `Dockerfile.frontend` | `3000` | — |
+### Service matrix
 
-### Useful compose commands
+| Service | Image / Build | Port | Depends on | Health check |
+|---|---|---|---|---|
+| `db` | `postgres:16` | `5432` | — | `pg_isready` |
+| `backend` | `docker/Dockerfile.backend` | `8080` | `db` (healthy) | — |
+| `frontend` | `docker/Dockerfile.frontend` | `3000` | `backend` | — |
+
+### Useful commands
 
 ```bash
-# Start all services
+# Start everything
 docker compose -f docker/docker-compose.yml up
 
 # Start in background
 docker compose -f docker/docker-compose.yml up -d
 
-# Rebuild and start
+# Rebuild images and start
 docker compose -f docker/docker-compose.yml up --build
+
+# Start a single service
+docker compose -f docker/docker-compose.yml up backend -d
 
 # Stop all
 docker compose -f docker/docker-compose.yml down
@@ -231,42 +373,8 @@ docker compose -f docker/docker-compose.yml down
 # Stop and delete volumes (resets database)
 docker compose -f docker/docker-compose.yml down -v
 
-# View logs
-docker compose -f docker/docker-compose.yml logs -f backend
-```
-
----
-
-## Testing the API Manually
-
-### 1. Create an organization
-
-```bash
-curl -X POST http://localhost:8080/api/admin/organizations ^
-  -H "Content-Type: application/json" ^
-  -d "{\"name\":\"ABC Driving School\"}"
-```
-
-### 2. Register as Admin
-
-```bash
-curl -X POST http://localhost:8080/api/auth/register ^
-  -H "Content-Type: application/json" ^
-  -d "{\"email\":\"admin@abc.com\",\"password\":\"123456\",\"name\":\"Admin\",\"role\":\"Admin\",\"organizationId\":\"<org-id-from-step-1>\"}"
-```
-
-### 3. Login
-
-```bash
-curl -X POST http://localhost:8080/api/auth/login ^
-  -H "Content-Type: application/json" ^
-  -d "{\"email\":\"admin@abc.com\",\"password\":\"123456\"}"
-```
-
-Save the `accessToken` from the response. Use it in subsequent requests:
-
-```bash
-curl -H "Authorization: Bearer <token>" http://localhost:8080/api/admin/organizations
+# Rebuild a single service
+docker compose -f docker/docker-compose.yml build backend
 ```
 
 ---
@@ -276,12 +384,31 @@ curl -H "Authorization: Bearer <token>" http://localhost:8080/api/admin/organiza
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `docker: command not found` | Docker Desktop not installed | Install from docker.com |
-| `Connection refused:5432` | PostgreSQL not running | `docker compose up db` |
+| `Connection refused:5432` | PostgreSQL not running | `docker compose up db -d` |
 | `Could not find dotnet` | .NET SDK not installed | Install from dotnet.microsoft.com |
 | `JWT validation failed` | Wrong `Jwt:Key` in config | Use the same key in backend and docker-compose |
-| `CORS error` | Frontend port not allowed | Check CORS in `Program.cs` |
-| `Tables not found` | DB not created | `EnsureCreated()` runs on startup, check logs |
-| `Port already in use` | Another process on same port | Change port in `appsettings.json` or kill process |
+| `CORS error` | Frontend port not allowed | Check `Program.cs` CORS config includes the frontend origin |
+| `Tables not found` | DB not created | `EnsureCreated()` runs on startup; check backend logs |
+| `Port already in use` | Another process on same port | Change port in `appsettings.json`, `.env.local`, or docker-compose |
+| Frontend shows blank page | API URL misconfigured | Check `NEXT_PUBLIC_API_URL` in `.env.local` |
+| Telemetry returns 401 | Missing or invalid JWT | Pass `--token <jwt>` to the Godot executable |
+| Godot can't connect to API | Wrong `--api-url` or backend not running | Verify `--api-url` points to the running backend |
+| `docker compose` not found | Old Docker version | Use `docker-compose` (with hyphen) instead, or upgrade |
+| Vitest tests fail with jsdom errors | Vitest config missing `environment: 'jsdom'` or setup file missing jest-dom import | Ensure `vitest.config.mts` uses `environment: 'jsdom'` and the setup file (`lib/__tests__/setup.ts`) imports `@testing-library/jest-dom/vitest` |
+
+---
+
+## Common dotnet commands
+
+```bash
+dotnet build              # Compile (without running)
+dotnet run                # Build + run
+dotnet watch run          # Hot reload on file changes
+dotnet test               # Run tests
+dotnet ef migrations add  # Create EF migration
+dotnet ef database update # Apply migrations
+dotnet ef database drop   # Drop database
+```
 
 ---
 
@@ -290,23 +417,40 @@ curl -H "Authorization: Bearer <token>" http://localhost:8080/api/admin/organiza
 ```
 simulation/
 ├── src/
-│   ├── backend/SimApi/     # ASP.NET Core 8 API
-│   ├── frontend/sim-web/   # Next.js 14 app
-│   └── simulation/         # (future docs)
-│       └── driving-sim/    # Godot 4 project
+│   ├── backend/SimApi/         # ASP.NET Core 10 API
+│   │   ├── Controllers/        # Auth, Admin, Instructor, Trainee, Telemetry
+│   │   ├── Models/             # User, Organization, SimulationSession, etc.
+│   │   ├── Services/           # JwtService, PasswordService
+│   │   ├── Data/               # AppDbContext
+│   │   ├── DTOs/               # Request/response types
+│   │   └── Program.cs
+│   └── frontend/sim-web/       # Next.js 16 app (App Router)
+│       ├── app/                # Pages (login, admin/*, instructor/*, trainee/*)
+│       ├── components/         # UI primitives + layout (sidebar, navbar)
+│       ├── lib/                # API client, auth context
+│       ├── lib/__tests__/      # Vitest test files + setup
+│       ├── proxy.ts            # Route protection (Next.js 16 proxy)
+│       ├── vitest.config.mts   # Vitest configuration (jsdom, path aliases)
+│       └── .env.local          # NEXT_PUBLIC_API_URL
+├── simulation/
+│   └── driving-sim/            # Godot 4 + C# project
+│       ├── Scenes/             # Main.tscn
+│       ├── Scripts/            # VehicleController.cs, BackendClient.cs
+│       ├── project.godot
+│       └── export_presets.cfg
 ├── docker/
-│   ├── docker-compose.yml
-│   └── Dockerfile.backend
-├── .memory/                # Agent shared memory
-├── .opencode/agents/       # Agent definitions
-├── agents/                 # Agent identity docs
-└── docs/                   # All documentation
+│   ├── docker-compose.yml      # db + backend + frontend
+│   ├── Dockerfile.backend
+│   └── Dockerfile.frontend
+├── .memory/                    # Agent shared memory
+├── agents/                     # Agent identity docs
+└── docs/
     ├── 00-overview/
-    ├── 01-product/         # Features, SRD, roadmap, MVP definition
+    ├── 01-product/             # MVP definition, features, roadmap
     ├── 02-architecture/
     ├── 03-ai-system/
     ├── 04-api/
     ├── 05-ui-ux/
-    ├── 06-engineering/     # Stack, coding standards, run & debug
+    ├── 06-engineering/         # Run & debug, stack, coding standards
     └── 99-reference/
 ```

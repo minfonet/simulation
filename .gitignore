@@ -1,0 +1,7 @@
+.opencode/telemetry.jsonl
+node_modules/
+.next/
+bin/
+obj/
+*.log
+dashboard.html
