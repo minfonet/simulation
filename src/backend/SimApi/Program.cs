@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SimApi.Data;
+using SimApi.Models;
 using SimApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,6 +64,19 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.EnsureCreated();
+
+    // Auto-seed bootstrap organization for first-time Admin registration
+    var bootstrapOrgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+    if (!db.Organizations.Any(o => o.Id == bootstrapOrgId))
+    {
+        db.Organizations.Add(new Organization
+        {
+            Id = bootstrapOrgId,
+            Name = "Bootstrap Organization",
+            CreatedAt = DateTime.UtcNow
+        });
+        db.SaveChanges();
+    }
 }
 
 app.Run();

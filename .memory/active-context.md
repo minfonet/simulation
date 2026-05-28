@@ -16,7 +16,8 @@ P1 milestone completed (2026-05-28): CriticalEvent model with ITelemetryIngestor
 ## MVP Reference
 
 See `docs/01-product/mdvp.md` for full scope, endpoints, data models, and acceptance criteria.
-See `docs/01-product/flow-gap-plan.md` for the pending work required to complete the requested Admin → Evaluator/Instructor → Evaluated/Trainee → Godot → report flow.
+See `docs/01-product/flow-gap-plan.md` for the gap analysis (P0/P1 delivered, remaining items).
+See `docs/01-product/execution-readiness.md` for a per-flow analysis of what's ready to execute vs pending.
 See `docs/03-ai-system/agent-skill-readiness.md` for the current agent readiness assessment and proposed project skills.
 See `docs/06-engineering/language-policy.md` for the mandatory English-only policy for repository artifacts.
 See `.opencode/skills/` for the five project skills (simulation-domain, godot-telemetry-hal, backend-telemetry-reporting, nextjs-role-ui, qa-e2e-simulation); restart opencode to load them.
@@ -45,6 +46,8 @@ Exceptions (LEAD may implement directly): trivial single-file changes under 10 l
 - JWT auth with refresh tokens
 - REST polling for telemetry (no SignalR in MVP)
 - No hardware integration in MVP
+- Bootstrap org auto-seeded in Program.cs on first startup — no manual DB seeding needed
+- Signup/Signin toggle on login page — first Admin registers from browser, then invites users via Admin panel
 - English-only repository artifacts policy; see `docs/06-engineering/language-policy.md` and `.memory/memories/decisions/mem_english_only_project_artifacts.md`
 
 ## Implementation Plan (Phase 1 — Backend Core)
@@ -146,8 +149,8 @@ Five project skills created and validated (2026-05-28):
 | Area | Files | Status |
 |---|---|---|
 | `active-context.md` | 1 | Current |
-| `sessions/` | 18 entries (includes P0 milestone + P1 milestone) | Complete for documented milestones |
-| `memories/decisions/` | 9 (auth JWT, Docker Compose, EF Core EnsureCreated, Next.js 16 proxy, localStorage auth, workflow enforcement, SQLite in-memory tests, Testing WebApplicationFactory, English-only artifacts) | Covers all key decisions |
+| `sessions/` | 19 entries (P0, P1, E2E execution, dashboards, signup form, etc.) | Complete for documented milestones |
+| `memories/decisions/` | 10 (auth JWT, Docker Compose, EF Core EnsureCreated, Next.js 16 proxy, localStorage auth, workflow enforcement, SQLite in-memory tests, Testing WebApplicationFactory, English-only artifacts, Admin self-registration signup) | Covers all key decisions |
 | `memories/bugs/` | 10 (proxy vs localStorage, ContactMonitor, DI inconsistency, parallel test race, JSON camelCase, JsonElement IConvertible, missing jti, telemetry auth cleared, E2E bootstrap/auth header, Godot telemetry JSON contract) | Documents all review + test findings |
 | `memories/learnings/` | 7 (Tailwind v4, Next.js 16 changes, Godot 4 C#, xUnit + WebApplicationFactory, opencode skill restart requirement, P1.1 critical events test coverage, xUnit pattern notes) | Captures framework-specific lessons |
 | `memories/architecture/` | 2 (three-layer architecture, scalable guardrails) | System structure documented |
@@ -155,11 +158,11 @@ Five project skills created and validated (2026-05-28):
 ## Test Infrastructure (Updated — 2026-05-28)
 
 | Layer | Framework | Status | Tests |
-|---|---|---|---|
+|---|---|---|---|---|
 | Frontend (sim-web) | Vitest + Testing Library + jsdom | ✅ 23 passing | `api.test.ts` (10), `auth-context.test.tsx` (7), `proxy.test.ts` (6), setup |
 | Backend (SimApi) | xUnit + WebApplicationFactory | ✅ 66 passing | Auth, Admin, Instructor, Trainee, Telemetry, Security, Validation, Reports |
 | Godot Simulation | xUnit (unit tests for BackendClient) | ✅ 12 passing | Unit tests for HTTP client + telemetry data contracts |
-| E2E | PowerShell | ✅ Script corrected, syntax validated | Self-seeding `tests/e2e/smoke-test.ps1`; requires running API/Docker Compose to execute |
+| E2E | PowerShell | ✅ 19/19 passing **executed against live Docker Compose** | Self-seeding `tests/e2e/smoke-test.ps1`; covers full flow incl. critical events + reports |
 
 ### Frontend test details
 
@@ -181,9 +184,9 @@ Five project skills created and validated (2026-05-28):
 ### E2E Smoke Tests
 
 - **Script**: `tests/e2e/smoke-test.ps1`
-- **Flow**: self-seed bootstrap org → register admin → create org → invite users → login → start session → send telemetry → finish → evaluate
+- **Flow**: self-seed bootstrap org → register admin → create org → invite users → login → create session → start → telemetry (normal + collision) → critical events → finish → instructor report → evaluate → trainee report → auth/me
 - **Target**: `localhost:8080` (Docker Compose)
-- **Status**: PowerShell syntax validated; full E2E execution requires live API and DB
+- **Status**: **19/19 PASS — executed against live Docker Compose**
 
 ### Godot Simulation Tests
 
@@ -197,7 +200,7 @@ Five project skills created and validated (2026-05-28):
 - ✅ .NET SDK 10 installed (confirmed: 10.0.300)
 - ✅ Godot 4.6.3 mono installed (confirmed at `C:\Projects\ia\core\Godot_v4.6.3-stable_mono_win64`)
 - PostgreSQL provider-specific behavior is not covered by SQLite integration tests; add Testcontainers when needed
-- E2E smoke script still needs execution against a live Docker Compose stack
+- ✅ E2E smoke script executed against live Docker Compose — 19/19 PASS
 - Frontend page components lack test coverage (23 tests cover only lib/, not pages/)
 - ✅ P0: Scenario presets enforced (backend validates, frontend dropdown); ✅ P0: Godot launch handoff with sessionId/apiUrl/token
 - ✅ P1: Critical event/reporting model complete with ITelemetryIngestor/ITelemetryStore boundaries, report endpoints, and frontend display
@@ -205,10 +208,14 @@ Five project skills created and validated (2026-05-28):
 - Godot input/telemetry/backend responsibilities are still concentrated in `VehicleController`/`BackendClient`; HAL and adapter extraction remain pending
 - ✅ P1: Telemetry boundaries extracted (ITelemetryIngestor/ITelemetryStore), CriticalEvent model with auto-generation, report endpoints exist for both Instructor and Trainee, frontend displays report on completed session pages
 - ✅ Five opencode project skills created (.opencode/skills/); restart opencode to load them
+- ✅ Bootstrap org auto-seeded in Program.cs; no manual seeding required
+- ✅ Signup/Signin toggle on login page; first Admin registers from browser
 
 ## Current Focus
 
-P1 milestone complete. All 101 tests pass (backend 66/66, frontend 23/23, Godot 12/12). CriticalEvent model with ITelemetryIngestor/ITelemetryStore boundaries, auto-generation from collisions, basic final report endpoints (Instructor + Trainee), and frontend report display. Known gaps: scenario-presets endpoint integration test (pre-existing), frontend page component tests (pre-existing), pre-existing TypeScript errors in test-only files do not affect build or tests. Next work: E2E smoke test execution against live Docker Compose, frontend page component tests, or integration test for scenario-presets endpoint. Restart opencode to load skills before new work.
+**All milestones complete.** Backend auto-seeds bootstrap org on startup. Login page has Signup/Signin toggle. First Admin registers from browser, then creates orgs and invites users from the Admin panel. E2E smoke test executed successfully against live Docker Compose — 19/19 passing. Dashboards improved for all 3 roles. Signup form added to login page (Admin self-registration from browser). Bootstrap org auto-seeded in Program.cs (no manual seeding needed). Comprehensive README.md with run/debug instructions. Tests: 101 unit/integration + 19 E2E = **120/120 all passing**.
+
+Known gaps: frontend page component tests (pre-existing), pre-existing TypeScript errors in test-only files do not affect build or tests. Restart opencode to load skills before new work.
 
 ## Open Tasks
 
@@ -224,8 +231,7 @@ P1 milestone complete. All 101 tests pass (backend 66/66, frontend 23/23, Godot 
 - [x] Godot simulation unit tests (BackendClient + data structures) — 12/12 passing
 - [x] Audit requested Admin → Evaluator → Evaluated flow compliance
 - [x] Document target evaluation flows, gap plan, and agent/skill readiness in `docs/`
-- [ ] Frontend page component tests (admin, instructor, trainee pages) — known gap
-- [ ] Run E2E smoke test against live Docker Compose API
+- [x] Document execution readiness per flow (`docs/01-product/execution-readiness.md`)
 - [x] Add basic scenario preset contract/list endpoint/UI selection and map it to Godot base scene/config
 - [x] Implement trainee-to-Godot launch handoff with `sessionId`, API URL, and authorization strategy
 - [ ] Add integration test for `GET /api/instructor/scenario-presets` endpoint (QA gap)
@@ -233,5 +239,13 @@ P1 milestone complete. All 101 tests pass (backend 66/66, frontend 23/23, Godot 
 - [x] Extract ITelemetryIngestor/ITelemetryStore boundaries for telemetry work — P1.1 complete
 - [x] Add frontend report display for Instructor and Trainee — P1.3 complete
 - [x] Create five project skills (.opencode/skills/) — simulation-domain, godot-telemetry-hal, backend-telemetry-reporting, nextjs-role-ui, qa-e2e-simulation
+- [x] Fix E2E smoke script: `"smoke-test"` → `"default"` at line 227
+- [x] Extend E2E smoke script: add critical events + report validation steps (6 new steps, now 19 total)
+- [x] Execute E2E smoke test against live Docker Compose — 19/19 PASS
+- [x] Improve frontend dashboards (admin, instructor, trainee) — org table with dates, recent sessions, pending evaluations, score badges
+- [x] Write comprehensive README.md with run/debug instructions, use cases, MVP scope
+- [x] Add auto-seed bootstrap org in Program.cs (no manual DB seeding needed)
+- [x] Add signup/signin toggle on login page (Admin self-registration from browser)
 - [ ] Fix pre-existing TypeScript errors in test-only files (4 errors in `api.test.ts`)
+- [ ] Frontend page component tests (admin, instructor, trainee pages) — known gap
 - [ ] Restart opencode to load new skills before starting new work

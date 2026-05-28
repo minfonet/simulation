@@ -4,7 +4,30 @@
 
 ## 1. Authentication
 
-### 1.1 Login
+### 1.1 Sign Up (Admin self-registration)
+
+```
+[User] → Opens /login → Clicks "Don't have an account? Sign up"
+                          │
+                  Enters name, email, password
+                          │
+                  POST /api/auth/register { name, email, password, role: "Admin", organizationId: bootstrapOrgId }
+                          │
+                     ┌────┴────┐
+                     │ 200 OK  │ 409 (email exists)
+                     └────┬────┘ └──→ Show error
+                          │
+           Store accessToken + refreshToken + user in localStorage
+                          │
+              Redirect to /admin (auto-logged in)
+```
+
+**Frontend**: `app/login/page.tsx` (signup toggle)  
+**Backend**: `POST /api/auth/register` → `AuthController.Register()`  
+**Persistence**: `User` table, JWT in localStorage  
+**Note**: Bootstrap org (`00000000-0000-0000-0000-000000000001`) is auto-seeded in `Program.cs` on first startup
+
+### 1.2 Login
 
 ```
 [User] → Opens /login → Enters email + password → POST /api/auth/login
@@ -16,17 +39,17 @@
                                            Store accessToken + refreshToken
                                            in localStorage
                                                           │
-                                              Redirect to role dashboard:
-                                              Admin → /admin
-                                              Instructor → /instructor
-                                              Trainee → /trainee
+                                               Redirect to role dashboard:
+                                               Admin → /admin
+                                               Instructor → /instructor
+                                               Trainee → /trainee
 ```
 
 **Frontend**: `app/login/page.tsx`  
 **Backend**: `POST /api/auth/login` → `AuthController.Login()`  
 **Persistence**: `User` table, JWT in localStorage
 
-### 1.2 Logout
+### 1.3 Logout
 
 ```
 [User] → Clicks "Sign out" → localStorage.clear()
@@ -35,7 +58,7 @@
 
 **Frontend**: `components/layout/sidebar.tsx` → `useAuth().logout()`
 
-### 1.3 Token refresh (automatic)
+### 1.4 Token refresh (automatic)
 
 ```
 [API call returns 401] → Retry with refreshToken
@@ -131,11 +154,11 @@
 [Instructor] → /instructor/sessions
                   │
           Select trainee from dropdown
-          Enter scenario name
+          Select base preset from dropdown (e.g. "Default")
                   │
           Click "Create Session"
                   │
-          POST /api/instructor/sessions
+          POST /api/instructor/sessions { traineeId, scenario: "default" }
                   │
                 201
                   │
@@ -240,14 +263,25 @@
                │
               200
                │
-        Status changes to "Active"
-               │
-        (MVP: manual status change — Godot integration TBD)
+          Status changes to "Active"
+                  │
+          Launch card appears with:
+          • CLI command: godot --session-id {id} --api-url {url} --token {token}
+          • "Copy Command" button
+          • "Download Launch Script" (.ps1) button
+                  │
+          Trainee copies command or runs script locally
+                  │
+          Godot parses arguments via BackendClient.ReadSessionId()
+                  │
+          Godot calls POST /api/trainee/sessions/{id}/start (re-entrant)
+          to activate session from within the engine
 ```
 
-**Frontend**: `app/trainee/sessions/page.tsx`  
+**Frontend**: `app/trainee/sessions/[id]/page.tsx` (launch card)  
 **Backend**: `POST /api/trainee/sessions/{id}/start` → `TraineeController.StartSession()`  
-**Persistence**: `SimulationSession.Status` → `Active`
+**Persistence**: `SimulationSession.Status` → `Active`  
+**Godot**: `BackendClient.ReadSessionId()` parses `--session-id`, `--api-url`, `--token`
 
 ### 4.3 Finish Simulation
 
@@ -266,21 +300,27 @@
 **Backend**: `POST /api/trainee/sessions/{id}/finish` → `TraineeController.FinishSession()`  
 **Persistence**: `SimulationSession.Status` → `Completed`, `CompletedAt`
 
-### 4.4 View Session Detail (Telemetry + Evaluation)
+### 4.4 View Session Detail (Telemetry + Evaluation + Report)
 
 ```
 [Trainee] → /trainee/sessions/{id}
                │
         GET /api/trainee/sessions/{id}
         GET /api/telemetry/session/{sessionId}
+        GET /api/trainee/sessions/{id}/report (if Completed)
                │
         View: status, instructor, scenario, score
               telemetry table (last 50 points)
+              report card with summary metrics (if Completed):
+              • total telemetry points
+              • avg/max/min speed
+              • collision count
+              • critical events list
               instructor notes (if evaluated)
 ```
 
-**Frontend**: `app/trainee/sessions/[id]/page.tsx`  
-**Backend**: `GET /api/trainee/sessions/{id}`, `GET /api/telemetry/session/{sessionId}`
+**Frontend**: `app/trainee/sessions/[id]/page.tsx` (includes report card component)  
+**Backend**: `GET /api/trainee/sessions/{id}`, `GET /api/telemetry/session/{sessionId}`, `GET /api/trainee/sessions/{id}/report`
 
 ### 4.5 View Evaluations
 
@@ -317,8 +357,9 @@
 │    POST /api/trainee/sessions/{id}/start                           │
 ├────────────────────────────────────────────────────────────────────┤
 │ 5. John drives in Godot simulation                                 │
-│    Godot sends telemetry every ~10 frames                          │
+│    Godot sends telemetry every ~10 frames (100ms)                  │
 │    POST /api/telemetry (batch)                                     │
+│    Collisions auto-record critical events                          │
 ├────────────────────────────────────────────────────────────────────┤
 │ 6. John finishes simulation                                        │
 │    POST /api/trainee/sessions/{id}/finish                          │
@@ -355,17 +396,17 @@ This section documents the requested target operating flow for the MVP and compa
 9. Evaluated/Trainee views the score, comments, and final status.
 ```
 
-### 6.2 Current state vs target/gap
+### 6.2 Current state vs target/gap (post-P0/P1)
 
-| Flow | Current state | MVP target | Minimum gap |
+| Flow | Current state (P0+P1 ✅) | MVP target | Remaining gap |
 |---|---|---|---|
-| Admin creates organization | Backend/API tests cover the main path. The E2E smoke test includes this path, but it has not yet been run against live Docker Compose services. The frontend exists. | Admin can create an organization and see UI confirmation. | Direct Admin component/page tests and E2E execution with live services are missing. |
-| Evaluator defines evaluation | Instructor creates `SimulationSession` with `traineeId` and free-text/default `scenario`. | Instructor chooses an explicit, versionable base preset, then creates a pending session. | Preset contract/listing, UI selector, backend validation, and preset mapping to the base Godot scene/config are missing. |
-| Evaluated launches Godot | Frontend marks the session active with `POST /start`; Godot is not launched from the UI. | Start button initiates a real handoff to Godot with `sessionId`, `apiUrl`, and authorization. | Launch/handoff mechanism, packaging/URI/protocol definition, and auth/token strategy for Godot are missing. |
-| Test with no time limit | No time limit is documented/enforced; the session ends by action/API. | There is no product time limit for the MVP; finishing is an explicit user/simulation action. | Acceptance must ensure that no mandatory timeout is added accidentally. |
-| Critical events | Current telemetry: speed, steering, position, and collision boolean. | Record minimal critical events, at least collision, with timestamp/severity/type for the report. | Critical event model/contract, derivation from telemetry or explicit emission, storage, and visualization are missing. |
-| Final report | Instructor sees a telemetry table and grades manually. | Instructor sees a basic report with session summary, critical events, and relevant telemetry before grading. | Report endpoint/query, report UI, content criteria, and tests are missing. |
-| Tests | Backend 50/50, frontend lib 23/23, Godot client 12/12; E2E smoke syntax validated. | Tests verify the real Admin → Instructor → Trainee → Godot/handoff → telemetry/events → report/evaluation flow. | Page tests, preset/event/report contracts, Godot auth, E2E execution with live services, and boundary coverage are missing. |
+| Admin creates organization | Backend 201/validation/auth tested. Frontend page exists with create/delete. E2E smoke covers path (not yet run against live Docker). | Admin can create an organization and see UI confirmation. | Frontend page component tests; E2E smoke execution with live services. |
+| Evaluator defines evaluation | `ScenarioPresetStore` with `"default"` preset. `POST /api/instructor/sessions` validates preset → 201 or 400. Frontend dropdown selector populated from `GET /api/instructor/scenario-presets`. | Instructor chooses an explicit, versionable base preset, then creates a pending session. | Integration test for presets endpoint; multiple presets (post-MVP). |
+| Evaluated launches Godot | Frontend launch card shows CLI command + download script. Godot `BackendClient.ReadSessionId()` parses `--session-id`, `--api-url`, `--token`. Start is re-entrant (API + Godot can both call it). | Start button initiates a real handoff to Godot with `sessionId`, `apiUrl`, and authorization. | No auto-launch (by MVP design); Godot must be installed locally. |
+| Test with no time limit | No time limit enforced in code. Session ends by explicit finish action. | There is no product time limit for the MVP; finishing is an explicit user/simulation action. | Acceptance must ensure no mandatory timeout is added accidentally. ✅ Verified. |
+| Critical events | `POST /api/telemetry` auto-derives `CriticalEvent` for each `collision=true`. Response returns `{ ingested, criticalEvents }`. `GET /api/telemetry/session/{id}/events` returns events ordered by timestamp. 7 integration tests. | Record minimal critical events, at least collision, with timestamp/severity/type for the report. | Collision deduplication (post-MVP). |
+| Final report | `GET /api/*/sessions/{id}/report` returns telemetry summary, collision count, critical events, evaluation. Report card component on both Instructor/Trainee session detail pages. 9 integration tests. | Instructor sees a basic report with session summary, critical events, and relevant telemetry before grading. | E2E smoke script does not include report validation step. |
+| Tests | Backend **66/66**, frontend lib **23/23**, Godot client **12/12**; E2E smoke syntax validated. P0/P1 boundary tests exist (telemetry ingestor/store, events, reports). | Tests verify the real Admin → Instructor → Trainee → Godot/handoff → telemetry/events → report/evaluation flow. | Page component tests; scenario-presets endpoint test; smoke script fix + extend; E2E execution with live services. |
 
 ### 6.3 Verifiable acceptance criteria by flow
 
@@ -425,6 +466,7 @@ Evaluate a non-Completed session → 400 → Evaluation form disabled
 ### 7.3 Email already registered
 ```
 Register with existing email → 409 → Show "Email already registered"
+Signup form shows error message below the form
 ```
 
 ### 7.4 Unauthorized access

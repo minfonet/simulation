@@ -5,8 +5,9 @@
 .DESCRIPTION
     Exercises the complete happy path:
     health -> seed bootstrap org -> register admin -> create org -> invite users ->
-    login -> create session -> start session -> send telemetry -> finish -> evaluate ->
-    retrieve telemetry -> verify auth/me.
+    login -> create session -> start session -> send telemetry with/without collision ->
+    verify critical events -> finish -> verify instructor report -> evaluate ->
+    verify trainee report -> retrieve telemetry -> verify auth/me.
 
     By default the script seeds the required bootstrap organization through the
     Docker Compose PostgreSQL service. Use -SkipBootstrapSeed only when the target
@@ -224,7 +225,7 @@ try {
     Write-Step "7. Create Session"
     $session = Invoke-Api -Method POST -Path "/api/instructor/sessions" -Body @{
         traineeId = $traineeId.ToString()
-        scenario = "smoke-test"
+        scenario = "default"
     } -Token $instructorToken
     Assert-Present $session.id "session id"
     $sessionId = $session.id
@@ -264,7 +265,45 @@ try {
     if ($telemetry.ingested -ne 2) {
         throw "Expected 2 telemetry records ingested, got $($telemetry.ingested)"
     }
-    Write-Pass "Telemetry ingested: $($telemetry.ingested) points"
+    Write-Pass "Telemetry ingested: $($telemetry.ingested) points (0 critical events)"
+
+    Write-Step "9b. Send Telemetry with Collision"
+    $telemetryWithCollision = Invoke-Api -Method POST -Path "/api/telemetry" -Body @{
+        sessionId = $sessionId.ToString()
+        points = @(
+            @{
+                timestamp = (Get-Date).ToUniversalTime().AddSeconds(2).ToString("o")
+                speed = 30.0
+                steeringAngle = 0.0
+                positionX = 20.0
+                positionY = 0.0
+                positionZ = 30.0
+                collision = $true
+            }
+        )
+    } -Token $traineeToken
+    if ($telemetryWithCollision.ingested -ne 1) {
+        throw "Expected 1 telemetry record ingested, got $($telemetryWithCollision.ingested)"
+    }
+    if ($telemetryWithCollision.criticalEvents -ne 1) {
+        throw "Expected 1 critical event from collision, got $($telemetryWithCollision.criticalEvents)"
+    }
+    Write-Pass "Telemetry ingested: $($telemetryWithCollision.ingested) points ($($telemetryWithCollision.criticalEvents) critical events)"
+
+    Write-Step "9c. Get Critical Events"
+    $events = Invoke-Api -Method GET -Path "/api/telemetry/session/$sessionId/events" -Token $traineeToken
+    $eventCount = @($events).Count
+    if ($eventCount -ne 1) {
+        throw "Expected 1 critical event, got $eventCount"
+    }
+    $firstEvent = $events[0]
+    if ($firstEvent.eventType -ne "collision") {
+        throw "Expected eventType 'collision', got '$($firstEvent.eventType)'"
+    }
+    if ($firstEvent.severity -ne "medium") {
+        throw "Expected severity 'medium', got '$($firstEvent.severity)'"
+    }
+    Write-Pass "Retrieved $eventCount critical events (type=$($firstEvent.eventType), severity=$($firstEvent.severity))"
 
     Write-Step "10. Finish Session"
     $finishResult = Invoke-Api -Method POST -Path "/api/trainee/sessions/$sessionId/finish" -Token $traineeToken
@@ -273,22 +312,47 @@ try {
     }
     Write-Pass "Session finished"
 
-    Write-Step "11. Evaluate Session"
+    Write-Step "11. Get Instructor Report"
+    $instructorReport = Invoke-Api -Method GET -Path "/api/instructor/sessions/$sessionId/report" -Token $instructorToken
+    Assert-Present $instructorReport.sessionId "report sessionId"
+    if ($instructorReport.totalTelemetryPoints -ne 3) {
+        throw "Expected 3 total telemetry points, got $($instructorReport.totalTelemetryPoints)"
+    }
+    if ($instructorReport.collisionCount -ne 1) {
+        throw "Expected 1 collision, got $($instructorReport.collisionCount)"
+    }
+    $eventCountInReport = @($instructorReport.criticalEvents).Count
+    if ($eventCountInReport -ne 1) {
+        throw "Expected 1 critical event in report, got $eventCountInReport"
+    }
+    Write-Pass "Report: $($instructorReport.totalTelemetryPoints) telemetry points, $($instructorReport.collisionCount) collisions, $eventCountInReport critical events"
+
+    Write-Step "12. Evaluate Session"
     Invoke-Api -Method POST -Path "/api/instructor/sessions/$sessionId/evaluate" -Body @{
         score = 92.5
         comments = "Good performance in smoke test"
     } -Token $instructorToken | Out-Null
     Write-Pass "Session evaluated"
 
-    Write-Step "12. Retrieve Telemetry"
+    Write-Step "13. Retrieve Telemetry after Evaluation"
     $records = Invoke-Api -Method GET -Path "/api/telemetry/session/$sessionId" -Token $traineeToken
     $recordCount = @($records).Count
-    if ($recordCount -lt 2) {
-        throw "Expected at least 2 telemetry records, got $recordCount"
+    if ($recordCount -lt 3) {
+        throw "Expected at least 3 telemetry records, got $recordCount"
     }
     Write-Pass "Retrieved $recordCount telemetry records"
 
-    Write-Step "13. Verify Auth/Me"
+    Write-Step "14. Get Trainee Report"
+    $traineeReport = Invoke-Api -Method GET -Path "/api/trainee/sessions/$sessionId/report" -Token $traineeToken
+    if ($traineeReport.score -ne 92.5) {
+        throw "Expected score 92.5, got $($traineeReport.score)"
+    }
+    if ($traineeReport.isEvaluated -ne $true) {
+        throw "Expected isEvaluated true, got $($traineeReport.isEvaluated)"
+    }
+    Write-Pass "Trainee report: score=$($traineeReport.score), isEvaluated=$($traineeReport.isEvaluated)"
+
+    Write-Step "15. Verify Auth/Me"
     $me = Invoke-Api -Method GET -Path "/api/auth/me" -Token $instructorToken
     if ($me.email -ne $instructorEmail) {
         throw "Expected auth/me email $instructorEmail, got $($me.email)"

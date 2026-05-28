@@ -15,6 +15,7 @@ interface AuthContextType {
   user: AuthUser | null
   loading: boolean
   login: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string, name: string, organizationId: string) => Promise<void>
   logout: () => void
 }
 
@@ -94,6 +95,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData)
   }, [])
 
+  const register = useCallback(async (email: string, password: string, name: string, organizationId: string) => {
+    const res = await api.post<{
+      accessToken: string
+      refreshToken: string
+      userId: string
+      email: string
+      name: string
+      role: string
+      organizationId: string
+    }>("/api/auth/register", { email, password, name, role: "Admin", organizationId })
+
+    localStorage.setItem("accessToken", res.accessToken)
+    localStorage.setItem("refreshToken", res.refreshToken)
+    const userData: AuthUser = {
+      userId: res.userId,
+      email: res.email,
+      name: res.name,
+      role: res.role as AuthUser["role"],
+      organizationId: res.organizationId,
+    }
+    localStorage.setItem("user", JSON.stringify(userData))
+    setUser(userData)
+  }, [])
+
   const logout = useCallback(() => {
     localStorage.removeItem("accessToken")
     localStorage.removeItem("refreshToken")
@@ -102,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   )
