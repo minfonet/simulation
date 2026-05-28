@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { use } from "react"
 import { api } from "@/lib/api"
 import { Navbar } from "@/components/layout/navbar"
@@ -32,12 +32,42 @@ interface TelemetryPoint {
   collision: boolean
 }
 
+interface CriticalEventSummary {
+  timestamp: string
+  eventType: string
+  severity: string
+  speed: number | null
+}
+
+interface SessionReport {
+  sessionId: string
+  scenario: string
+  status: string
+  createdAt: string
+  completedAt: string | null
+  totalTelemetryPoints: number
+  averageSpeed: number | null
+  maxSpeed: number | null
+  minSpeed: number | null
+  collisionCount: number
+  isEvaluated: boolean
+  score: number | null
+  instructorNotes: string | null
+  instructorName: string | null
+  traineeName: string | null
+  criticalEvents: CriticalEventSummary[]
+}
+
 export default function InstructorSessionDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [session, setSession] = useState<SessionDetail | null>(null)
   const [telemetry, setTelemetry] = useState<TelemetryPoint[]>([])
   const [score, setScore] = useState("")
   const [comments, setComments] = useState("")
+  const [report, setReport] = useState<SessionReport | null>(null)
+  const [reportLoading, setReportLoading] = useState(false)
+  const [reportError, setReportError] = useState<string | null>(null)
+  const reportAttempted = useRef(false)
 
   useEffect(() => {
     api.get<SessionDetail>(`/api/instructor/sessions/${id}`).then((s) => {
@@ -47,6 +77,18 @@ export default function InstructorSessionDetail({ params }: { params: Promise<{ 
     })
     api.get<TelemetryPoint[]>(`/api/telemetry/session/${id}`).then(setTelemetry)
   }, [id])
+
+  useEffect(() => {
+    if (session?.status === "Completed" && !report && !reportLoading && !reportAttempted.current) {
+      reportAttempted.current = true
+      setReportLoading(true)
+      setReportError(null)
+      api.get<SessionReport>(`/api/instructor/sessions/${id}/report`)
+        .then(setReport)
+        .catch((err) => setReportError(err instanceof Error ? err.message : "Failed to load report"))
+        .finally(() => setReportLoading(false))
+    }
+  }, [session?.status, id, report, reportLoading])
 
   async function evaluate() {
     await api.post(`/api/instructor/sessions/${id}/evaluate`, {
@@ -80,6 +122,79 @@ export default function InstructorSessionDetail({ params }: { params: Promise<{ 
             <span className="text-sm font-medium">Score: {session.score}%</span>
           )}
         </div>
+
+        {reportLoading && (
+          <Card>
+            <CardContent>
+              <p className="text-sm text-zinc-500">Loading report...</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {reportError && (
+          <Card className="border-red-300">
+            <CardContent className="pt-6">
+              <p className="text-sm text-red-700">{reportError}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {report && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Session Report</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div>
+                  <p className="text-sm text-zinc-500">Total Telemetry</p>
+                  <p className="text-lg font-semibold">{report.totalTelemetryPoints}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-500">Avg Speed</p>
+                  <p className="text-lg font-semibold">{report.averageSpeed?.toFixed(1) ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-500">Max Speed</p>
+                  <p className="text-lg font-semibold">{report.maxSpeed?.toFixed(1) ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-500">Min Speed</p>
+                  <p className="text-lg font-semibold">{report.minSpeed?.toFixed(1) ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-500">Collisions</p>
+                  <p className="text-lg font-semibold">{report.collisionCount}</p>
+                </div>
+              </div>
+
+              {report.criticalEvents.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Critical Events ({report.criticalEvents.length})</h4>
+                  <div className="space-y-2">
+                    {report.criticalEvents.map((evt) => (
+                      <div key={`${evt.timestamp}-${evt.eventType}`} className="flex items-center gap-3 text-sm bg-red-50 border border-red-200 rounded p-2">
+                        <Badge variant="destructive" className="uppercase text-xs">{evt.eventType}</Badge>
+                        <span className="text-zinc-600">{new Date(evt.timestamp).toLocaleTimeString()}</span>
+                        {evt.speed != null && <span className="text-zinc-500">Speed: {evt.speed.toFixed(1)}</span>}
+                        <span className={`text-xs font-medium uppercase ${
+                          evt.severity === "high" ? "text-red-600" : evt.severity === "medium" ? "text-amber-600" : "text-zinc-500"
+                        }`}>{evt.severity}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {report.isEvaluated && (
+                <div className="border-t pt-2">
+                  <p className="text-sm text-zinc-500">Evaluated by {report.instructorName}</p>
+                  <p className="text-lg font-semibold">Score: {report.score}%</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2">
           <Card>

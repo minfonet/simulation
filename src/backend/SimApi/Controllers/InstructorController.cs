@@ -16,11 +16,13 @@ public class InstructorController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly ScenarioPresetStore _presetStore;
+    private readonly IReportService _reportService;
 
-    public InstructorController(AppDbContext db, ScenarioPresetStore presetStore)
+    public InstructorController(AppDbContext db, ScenarioPresetStore presetStore, IReportService reportService)
     {
         _db = db;
         _presetStore = presetStore;
+        _reportService = reportService;
     }
 
     private Guid GetUserId() =>
@@ -170,6 +172,29 @@ public class InstructorController : ControllerBase
             .ToListAsync();
 
         return Ok(trainees);
+    }
+
+    [HttpGet("sessions/{id}/report")]
+    public async Task<ActionResult<SessionReportResponse>> GetSessionReport(Guid id)
+    {
+        var session = await _db.SimulationSessions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == id && s.InstructorId == GetUserId());
+
+        if (session == null) return NotFound();
+
+        if (session.Status != SessionStatus.Completed)
+            return BadRequest("Session must be completed before viewing the report");
+
+        try
+        {
+            var report = await _reportService.GetSessionReportAsync(id);
+            return Ok(report);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpGet("evaluations")]

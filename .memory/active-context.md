@@ -11,6 +11,7 @@ Flow gap and agent/skill readiness documentation completed (2026-05-28).
 English-only project artifact policy added and recent Spanish documentation/memory translated (2026-05-28).
 Five opencode project skills created, reviewed, and QA-validated (2026-05-28).
 P0 milestone completed (2026-05-28): base scenario preset with backend validation + frontend selector, Godot launch handoff with sessionId/apiUrl/token, all 85 tests passing.
+P1 milestone completed (2026-05-28): CriticalEvent model with ITelemetryIngestor/ITelemetryStore boundaries, auto-generation of critical events from collisions, basic final report endpoints (Instructor + Trainee) with telemetry summary and evaluation info, frontend report display on completed session pages, all 101 tests passing.
 
 ## MVP Reference
 
@@ -108,16 +109,16 @@ See `docs/99-reference/architecture-review.md` for 12 inconsistencies ranked by 
 Requested flows:
 
 1. **Admin creates an organization** — ✅ Backend/API and frontend page exist; backend integration tests cover the API path. The E2E smoke script includes this path but still needs execution against live Docker Compose services. Frontend page components still lack direct tests.
-2. **Evaluator/Instructor defines an evaluation scene/session** — ⚠️ Basic session creation exists (`traineeId` + free-text `scenario`, default `"default"`), but there is no explicit scenario preset contract, selector, endpoint, or mapping from scenario to Godot scene/config. Godot currently has one hardcoded base scene (`simulation/driving-sim/Scenes/Main.tscn`).
-3. **Evaluated/Trainee enters, Godot launches, test runs without time limit, critical events are recorded for final report/evaluation** — ⚠️ Session start/finish and telemetry ingestion exist and no time limit is enforced. However the frontend does not actually launch Godot or pass `--session-id`, `--token`, `--api-url`; E2E simulates telemetry via API, not through Godot. Telemetry records speed, steering, position, and collision only; there is no critical event model, report endpoint, severity/timeline, rule violations, braking/acceleration fields, or summarized report for evaluator scoring.
+2. **Evaluator/Instructor defines an evaluation scene/session** — ⚠️ Basic session creation exists (`traineeId` + free-text `scenario`, default `"default"`), but there is no explicit scenario preset contract, selector, endpoint, or mapping from scenario to Godot scene/config. Godot currently has one hardcoded base scene (`simulation/driving-sim/Scenes/Main.tscn`). ✅ P0: scenario preset list endpoint + frontend selector added.
+3. **Evaluated/Trainee enters, Godot launches, test runs without time limit, critical events are recorded for final report/evaluation** — ⚠️ Session start/finish and telemetry ingestion exist and no time limit is enforced. However the frontend does not actually launch Godot or pass `--session-id`, `--token`, `--api-url`; E2E simulates telemetry via API, not through Godot. ✅ P0: Launch handoff implemented (CLI command + download script + token strategy). ✅ P1: Critical event model with auto-generation from collisions, telemetry boundaries extracted (ITelemetryIngestor/ITelemetryStore), basic final report endpoints with telemetry summary + critical events + evaluation info, frontend report display on completed session pages. Remaining: rule violations, braking/acceleration fields, advanced analytics (post-MVP).
 
 Architecture risks observed during the audit:
 
-- Backend controllers currently contain business/use-case logic and EF access directly; future work should introduce application services/stores, especially for sessions, evaluations, and telemetry.
-- Telemetry ingestion persists directly from `TelemetryController`; new telemetry/report work must add ingestion/storage/query boundaries such as `ITelemetryIngestor` and `ITelemetryStore`.
+- Backend controllers currently contain business/use-case logic and EF access directly; future work should introduce application services/stores, especially for sessions, and evaluations.
+- ✅ P1: TelemetryController now delegates to ITelemetryIngestor/ITelemetryStore boundaries; critical events go through the same pipeline. Session/evaluation controllers still use direct EF access (documented debt).
 - Godot `VehicleController` mixes engine input, physics orchestration, telemetry collection, and backend communication; future work should extract input/telemetry/session-client collaborators.
 - Control input currently reads Godot `Input` directly; HAL abstraction is still pending before adding more control types.
-- Backend/Godot telemetry contracts are duplicated and only partially covered by compatibility tests; report/critical-event contracts should be explicit and versionable.
+- Backend/Godot telemetry contracts are duplicated and only partially covered by compatibility tests; report/critical-event contracts are now explicit and versionable (CriticalEvent model, SessionReportResponse DTO, contract tests via integration tests).
 
 ## Flow Gap Documentation — 2026-05-28
 
@@ -145,10 +146,10 @@ Five project skills created and validated (2026-05-28):
 | Area | Files | Status |
 |---|---|---|
 | `active-context.md` | 1 | Current |
-| `sessions/` | 17 entries (15 milestone sessions + README/example; includes flow compliance audit, flow gap docs, language policy, skills creation, and P0 milestone) | Complete for documented milestones |
+| `sessions/` | 18 entries (includes P0 milestone + P1 milestone) | Complete for documented milestones |
 | `memories/decisions/` | 9 (auth JWT, Docker Compose, EF Core EnsureCreated, Next.js 16 proxy, localStorage auth, workflow enforcement, SQLite in-memory tests, Testing WebApplicationFactory, English-only artifacts) | Covers all key decisions |
 | `memories/bugs/` | 10 (proxy vs localStorage, ContactMonitor, DI inconsistency, parallel test race, JSON camelCase, JsonElement IConvertible, missing jti, telemetry auth cleared, E2E bootstrap/auth header, Godot telemetry JSON contract) | Documents all review + test findings |
-| `memories/learnings/` | 5 (Tailwind v4, Next.js 16 changes, Godot 4 C#, xUnit + WebApplicationFactory, opencode skill restart requirement) | Captures framework-specific lessons |
+| `memories/learnings/` | 7 (Tailwind v4, Next.js 16 changes, Godot 4 C#, xUnit + WebApplicationFactory, opencode skill restart requirement, P1.1 critical events test coverage, xUnit pattern notes) | Captures framework-specific lessons |
 | `memories/architecture/` | 2 (three-layer architecture, scalable guardrails) | System structure documented |
 
 ## Test Infrastructure (Updated — 2026-05-28)
@@ -156,7 +157,7 @@ Five project skills created and validated (2026-05-28):
 | Layer | Framework | Status | Tests |
 |---|---|---|---|
 | Frontend (sim-web) | Vitest + Testing Library + jsdom | ✅ 23 passing | `api.test.ts` (10), `auth-context.test.tsx` (7), `proxy.test.ts` (6), setup |
-| Backend (SimApi) | xUnit + WebApplicationFactory | ✅ 50 passing | Auth, Admin, Instructor, Trainee, Telemetry, Security, Validation |
+| Backend (SimApi) | xUnit + WebApplicationFactory | ✅ 66 passing | Auth, Admin, Instructor, Trainee, Telemetry, Security, Validation, Reports |
 | Godot Simulation | xUnit (unit tests for BackendClient) | ✅ 12 passing | Unit tests for HTTP client + telemetry data contracts |
 | E2E | PowerShell | ✅ Script corrected, syntax validated | Self-seeding `tests/e2e/smoke-test.ps1`; requires running API/Docker Compose to execute |
 
@@ -171,9 +172,9 @@ Five project skills created and validated (2026-05-28):
 
 - **Project**: `tests/SimApi.IntegrationTests/` → xUnit + WebApplicationFactory
 - **Target**: `net10.0` with Npgsql 10.0.1, EF Core 10.0.8, JWT Bearer
-- **Scope**: Auth flow, CRUD (Orgs, Users, Sessions), Telemetry, Evaluations, Security/validation
+- **Scope**: Auth flow, CRUD (Orgs, Users, Sessions), Telemetry, Evaluations, Reports, Security/validation
 - **Database**: In-memory SQLite (shared connection per test class, open for lifetime)
-- **Status**: **50/50 passing** (all controllers + security + validation)
+- **Status**: **66/66 passing** (all controllers + security + validation + reports)
 - **Files**: `IntegrationTestBase.cs`, `HealthCheckTests.cs`, `AuthFlowTests.cs`, `AdminControllerTests.cs`, `InstructorControllerTests.cs`, `TraineeControllerTests.cs`, `TelemetryControllerTests.cs`, `AuthSecurityTests.cs`, `ValidationTests.cs`
 - **Isolation**: `WebApplicationFactory` switches to `Testing` environment and injects SQLite per test instance; no static DbContext override is used
 
@@ -198,16 +199,16 @@ Five project skills created and validated (2026-05-28):
 - PostgreSQL provider-specific behavior is not covered by SQLite integration tests; add Testcontainers when needed
 - E2E smoke script still needs execution against a live Docker Compose stack
 - Frontend page components lack test coverage (23 tests cover only lib/, not pages/)
-- Scenario support is free-text only; no preset contract/listing/mapping to Godot scene configuration yet
-- Frontend does not launch Godot or pass startup arguments/tokens to the simulator
-- Critical event/reporting model is missing; evaluator currently sees raw telemetry table and enters score manually
-- Telemetry and session/evaluation logic still live directly in controllers; future changes must add service/store boundaries per architecture guardrails
+- ✅ P0: Scenario presets enforced (backend validates, frontend dropdown); ✅ P0: Godot launch handoff with sessionId/apiUrl/token
+- ✅ P1: Critical event/reporting model complete with ITelemetryIngestor/ITelemetryStore boundaries, report endpoints, and frontend display
+- Session/evaluation controllers still use direct EF access (documented debt for P2)
 - Godot input/telemetry/backend responsibilities are still concentrated in `VehicleController`/`BackendClient`; HAL and adapter extraction remain pending
+- ✅ P1: Telemetry boundaries extracted (ITelemetryIngestor/ITelemetryStore), CriticalEvent model with auto-generation, report endpoints exist for both Instructor and Trainee, frontend displays report on completed session pages
 - ✅ Five opencode project skills created (.opencode/skills/); restart opencode to load them
 
 ## Current Focus
 
-P0 milestone complete. All 85 tests pass (backend 50/50, frontend 23/23, Godot 12/12). Base scenario preset is enforced (backend validates, frontend dropdown selector). Godot launch handoff works end-to-end: Trainee starts session → launch command with `--session-id`, `--api-url`, `--token` → copy/download mechanism. Godot BackendClient already parses these arguments. Known gaps: scenario-presets endpoint still needs an integration test; frontend page components lack tests (pre-existing); pre-existing TypeScript errors in test-only files do not affect build or tests. Next work should proceed with P1: critical events and basic final report, or E2E smoke test execution against live Docker Compose. Restart opencode to load new skills before P1 work.
+P1 milestone complete. All 101 tests pass (backend 66/66, frontend 23/23, Godot 12/12). CriticalEvent model with ITelemetryIngestor/ITelemetryStore boundaries, auto-generation from collisions, basic final report endpoints (Instructor + Trainee), and frontend report display. Known gaps: scenario-presets endpoint integration test (pre-existing), frontend page component tests (pre-existing), pre-existing TypeScript errors in test-only files do not affect build or tests. Next work: E2E smoke test execution against live Docker Compose, frontend page component tests, or integration test for scenario-presets endpoint. Restart opencode to load skills before new work.
 
 ## Open Tasks
 
@@ -228,8 +229,9 @@ P0 milestone complete. All 85 tests pass (backend 50/50, frontend 23/23, Godot 1
 - [x] Add basic scenario preset contract/list endpoint/UI selection and map it to Godot base scene/config
 - [x] Implement trainee-to-Godot launch handoff with `sessionId`, API URL, and authorization strategy
 - [ ] Add integration test for `GET /api/instructor/scenario-presets` endpoint (QA gap)
-- [ ] Add critical-event/report model and evaluator-facing report summary from telemetry
-- [ ] Refactor telemetry/session/evaluation changes behind service/store boundaries before expanding reporting
+- [x] Add critical-event/report model and evaluator-facing report summary from telemetry — P1 complete with 9 integration tests
+- [x] Extract ITelemetryIngestor/ITelemetryStore boundaries for telemetry work — P1.1 complete
+- [x] Add frontend report display for Instructor and Trainee — P1.3 complete
 - [x] Create five project skills (.opencode/skills/) — simulation-domain, godot-telemetry-hal, backend-telemetry-reporting, nextjs-role-ui, qa-e2e-simulation
 - [ ] Fix pre-existing TypeScript errors in test-only files (4 errors in `api.test.ts`)
-- [ ] Restart opencode to load new skills before starting P1 work
+- [ ] Restart opencode to load new skills before starting new work

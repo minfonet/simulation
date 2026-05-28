@@ -45,4 +45,7 @@ public class SimulationSession
 
     [JsonIgnore]
     public Evaluation? Evaluation { get; set; }
+
+    [JsonIgnore]
+    public ICollection<CriticalEvent> CriticalEvents { get; set; } = new List<CriticalEvent>();
 }

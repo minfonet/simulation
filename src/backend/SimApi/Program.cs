@@ -39,6 +39,9 @@ if (!builder.Environment.IsEnvironment("Testing"))
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddSingleton<ScenarioPresetStore>();
+builder.Services.AddScoped<ITelemetryStore, TelemetryStore>();
+builder.Services.AddScoped<ITelemetryIngestor, TelemetryIngestor>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddCors(options =>
 {

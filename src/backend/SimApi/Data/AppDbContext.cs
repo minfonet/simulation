@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<SimulationSession> SimulationSessions => Set<SimulationSession>();
     public DbSet<TelemetryRecord> TelemetryRecords => Set<TelemetryRecord>();
     public DbSet<Evaluation> Evaluations => Set<Evaluation>();
+    public DbSet<CriticalEvent> CriticalEvents => Set<CriticalEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +60,16 @@ public class AppDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.InstructorId)
                   .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CriticalEvent>(entity =>
+        {
+            entity.HasOne(e => e.Session)
+                  .WithMany(s => s.CriticalEvents)
+                  .HasForeignKey(e => e.SessionId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.SessionId);
+            entity.HasIndex(e => e.EventType);
         });
     }
 }

@@ -120,3 +120,5 @@ new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
 | `InvalidOperationException` on `Convert.ToInt32()` | Cast to `JsonElement` and use `.GetInt32()` |
 | Refresh token equals original | Add `jti` claim with `Guid.NewGuid()` |
 | Auth token lost after helper methods | Re-set `SetAuthToken()` explicitly before the action under test |
+| `Assert.Equal(double, double?, int)` doesn't compile | Use `.GetValueOrDefault()` on nullable double before precision comparison: `Assert.Equal(50.0, report.AverageSpeed.GetValueOrDefault(), 2)` |
+| `Assert.NotNull()` on non-nullable value types (e.g., `DateTime`) triggers warning | Use `.HasValue` on nullable types or remove the assertion for non-nullable value types |

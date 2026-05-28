@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SimApi.Data;
 using SimApi.DTOs;
 using SimApi.Models;
+using SimApi.Services;
 
 namespace SimApi.Controllers;
 
@@ -15,11 +16,13 @@ public class TraineeController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly IConfiguration _configuration;
+    private readonly IReportService _reportService;
 
-    public TraineeController(AppDbContext db, IConfiguration configuration)
+    public TraineeController(AppDbContext db, IConfiguration configuration, IReportService reportService)
     {
         _db = db;
         _configuration = configuration;
+        _reportService = reportService;
     }
 
     private Guid GetUserId() =>
@@ -109,6 +112,29 @@ public class TraineeController : ControllerBase
         await _db.SaveChangesAsync();
 
         return Ok(new { session.Id, Status = session.Status.ToString() });
+    }
+
+    [HttpGet("sessions/{id}/report")]
+    public async Task<ActionResult<SessionReportResponse>> GetSessionReport(Guid id)
+    {
+        var session = await _db.SimulationSessions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == id && s.TraineeId == GetUserId());
+
+        if (session == null) return NotFound();
+
+        if (session.Status != SessionStatus.Completed)
+            return BadRequest("Session must be completed before viewing the report");
+
+        try
+        {
+            var report = await _reportService.GetSessionReportAsync(id);
+            return Ok(report);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpGet("evaluations")]

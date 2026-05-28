@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SimApi.Data;
 using SimApi.DTOs;
-using SimApi.Models;
+using SimApi.Services;
 
 namespace SimApi.Controllers;
 
@@ -12,62 +10,74 @@ namespace SimApi.Controllers;
 [Authorize]
 public class TelemetryController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly ITelemetryIngestor _ingestor;
+    private readonly ITelemetryStore _store;
 
-    public TelemetryController(AppDbContext db)
+    public TelemetryController(ITelemetryIngestor ingestor, ITelemetryStore store)
     {
-        _db = db;
+        _ingestor = ingestor;
+        _store = store;
     }
 
     [HttpPost]
     public async Task<ActionResult> IngestTelemetry(TelemetryBatchRequest request)
     {
-        var session = await _db.SimulationSessions.FindAsync(request.SessionId);
-        if (session == null) return NotFound("Session not found");
-
-        if (session.Status != SessionStatus.Active)
-            return BadRequest("Session is not active");
-
-        var records = request.Points.Select(p => new TelemetryRecord
+        try
         {
-            SessionId = request.SessionId,
-            Timestamp = p.Timestamp,
-            Speed = p.Speed,
-            SteeringAngle = p.SteeringAngle,
-            PositionX = p.PositionX,
-            PositionY = p.PositionY,
-            PositionZ = p.PositionZ,
-            Collision = p.Collision
-        }).ToList();
-
-        _db.TelemetryRecords.AddRange(records);
-        await _db.SaveChangesAsync();
-
-        return Ok(new { ingested = records.Count });
+            var result = await _ingestor.IngestBatchAsync(request.SessionId, request.Points);
+            return Ok(new { ingested = result.TelemetryCount, criticalEvents = result.CriticalEventCount });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpGet("session/{sessionId}")]
     public async Task<ActionResult<List<TelemetryResponse>>> GetTelemetry(Guid sessionId)
     {
-        var session = await _db.SimulationSessions.FindAsync(sessionId);
-        if (session == null) return NotFound();
+        if (!await _store.SessionExistsAsync(sessionId))
+            return NotFound("Session not found");
 
-        var records = await _db.TelemetryRecords
-            .Where(t => t.SessionId == sessionId)
-            .OrderBy(t => t.Timestamp)
-            .Select(t => new TelemetryResponse
-            {
-                Id = t.Id,
-                Timestamp = t.Timestamp,
-                Speed = t.Speed,
-                SteeringAngle = t.SteeringAngle,
-                PositionX = t.PositionX,
-                PositionY = t.PositionY,
-                PositionZ = t.PositionZ,
-                Collision = t.Collision
-            })
-            .ToListAsync();
+        var records = await _store.GetTelemetryBySessionAsync(sessionId);
 
-        return Ok(records);
+        var response = records.Select(r => new TelemetryResponse
+        {
+            Id = r.Id,
+            Timestamp = r.Timestamp,
+            Speed = r.Speed,
+            SteeringAngle = r.SteeringAngle,
+            PositionX = r.PositionX,
+            PositionY = r.PositionY,
+            PositionZ = r.PositionZ,
+            Collision = r.Collision
+        }).ToList();
+
+        return Ok(response);
+    }
+
+    [HttpGet("session/{sessionId}/events")]
+    public async Task<ActionResult<List<CriticalEventResponse>>> GetCriticalEvents(Guid sessionId)
+    {
+        if (!await _store.SessionExistsAsync(sessionId))
+            return NotFound("Session not found");
+
+        var events = await _store.GetCriticalEventsBySessionAsync(sessionId);
+
+        var response = events.Select(e => new CriticalEventResponse
+        {
+            Id = e.Id,
+            SessionId = e.SessionId,
+            Timestamp = e.Timestamp,
+            EventType = e.EventType,
+            Severity = e.Severity,
+            Metadata = e.Metadata
+        }).ToList();
+
+        return Ok(response);
     }
 }

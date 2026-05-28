@@ -33,3 +33,9 @@ public class TelemetryResponse
     public double PositionZ { get; set; }
     public bool Collision { get; set; }
 }
+
+public class IngestResult
+{
+    public int TelemetryCount { get; set; }
+    public int CriticalEventCount { get; set; }
+}
