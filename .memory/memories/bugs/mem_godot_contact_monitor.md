@@ -10,19 +10,19 @@ tags:
 
 # Issue
 
-VehicleController.cs conecta el evento `BodyEntered` pero `RigidBody3D` requiere `ContactMonitor = true` y `MaxContactsReported > 0` para que el evento se dispare. Sin esto, `_collidedThisFrame` siempre es `false` y la telemetría nunca reporta colisiones.
+VehicleController.cs connects the `BodyEntered` event, but `RigidBody3D` requires `ContactMonitor = true` and `MaxContactsReported > 0` for the event to fire. Without this, `_collidedThisFrame` is always `false` and telemetry never reports collisions.
 
 # Root cause
 
-Desconocimiento del API de Godot 4 C#. En Godot 3, RigidBody detectaba colisiones sin configuración adicional. En Godot 4, los flags de contacto son explícitos.
+Godot 4 C# API knowledge gap. In Godot 3, RigidBody detected collisions without additional configuration. In Godot 4, contact flags are explicit.
 
 # Impact
 
-Medio — las colisiones no se registran en telemetría, pero el simulador funciona correctamente. La evaluación del instructor perderá datos de colisiones.
+Medium — collisions are not recorded in telemetry, but the simulator works correctly. Instructor evaluation will lose collision data.
 
 # Fix
 
-Agregar en `_Ready()` antes de conectar el evento:
+Add in `_Ready()` before connecting the event:
 ```
 ContactMonitor = true;
 MaxContactsReported = 1;
@@ -32,6 +32,6 @@ MaxContactsReported = 1;
 
 ✅ Fixed 2026-05-27 — lines added to `_Ready()` before `BodyEntered += OnBodyEntered;`.
 
-# Referencia
+# Reference
 
 docs/99-reference/architecture-review.md — item 3

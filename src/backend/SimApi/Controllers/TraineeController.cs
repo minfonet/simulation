@@ -87,7 +87,7 @@ public class TraineeController : ControllerBase
         session.Status = SessionStatus.Active;
         await _db.SaveChangesAsync();
 
-        return Ok(new { session.Id, session.Status.ToString() });
+        return Ok(new { session.Id, Status = session.Status.ToString() });
     }
 
     [HttpPost("sessions/{id}/finish")]
@@ -105,7 +105,7 @@ public class TraineeController : ControllerBase
         session.CompletedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
-        return Ok(new { session.Id, session.Status.ToString() });
+        return Ok(new { session.Id, Status = session.Status.ToString() });
     }
 
     [HttpGet("evaluations")]

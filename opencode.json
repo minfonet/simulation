@@ -3,19 +3,19 @@
   "default_agent": "lead",
   "agent": {
     "lead": {
-      "description": "Coordinates software delivery, breaks work into tasks, delegates to implementer and reviewer.",
-      "mode": "subagent"
+      "description": "Coordinates software delivery and enforces scalable architecture guardrails before delegating work.",
+      "mode": "primary"
     },
     "implementer": {
-      "description": "Writes clean working code following MVP specifications.",
+      "description": "Writes clean working code following modular architecture, Godot decoupling, HAL, and telemetry guardrails.",
       "mode": "subagent"
     },
     "reviewer": {
-      "description": "Critically evaluates implementations for correctness, maintainability, and security.",
+      "description": "Critically evaluates implementations for correctness, maintainability, security, and architecture boundary violations.",
       "mode": "subagent"
     },
     "qa": {
-      "description": "Creates and runs tests for all layers (frontend, backend, E2E).",
+      "description": "Creates and runs tests for all layers and verifies contract/boundary coverage.",
       "mode": "subagent"
     }
   }

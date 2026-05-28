@@ -30,9 +30,9 @@ tags:
 
 | From | To | Protocol | Details |
 |---|---|---|---|
-| Browser (React) | Backend | REST/JSON | JWT en Authorization header |
+| Browser (React) | Backend | REST/JSON | JWT in Authorization header |
 | Godot | Backend | REST/JSON | JWT via --token CLI arg |
-| Backend | PostgreSQL | EF Core (Npgsql) | EnsureCreated() en startup |
+| Backend | PostgreSQL | EF Core (Npgsql) | EnsureCreated() on startup |
 
 ## Auth flow
 
@@ -44,12 +44,12 @@ tags:
 
 ## Key constraints
 
-- CORS permite cualquier origen (AllAnyOrigin) — aceptable para MVP
-- No hay SignalR — telemetría usa REST polling
-- No hay TimescaleDB — PostgreSQL vanilla
-- No hay hardware integration
+- CORS allows any origin (AllAnyOrigin) — acceptable for MVP
+- No SignalR — telemetry uses REST polling
+- No TimescaleDB — vanilla PostgreSQL
+- No hardware integration
 
-# Referencia
+# References
 
 docs/02-architecture/architecture.md
 docs/01-product/mdvp.md

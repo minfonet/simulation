@@ -9,21 +9,21 @@ tags:
 
 # Context
 
-Necesitábamos definir cómo orquestar los servicios del MVP (backend, base de datos, frontend futuro) para desarrollo local y eventual despliegue.
+We needed to define how to orchestrate MVP services (backend, database, future frontend) for local development and eventual deployment.
 
 # Decision
 
-Usar Docker Compose con un solo archivo `docker/docker-compose.yml`. Backend con Dockerfile multi-stage, Postgres 16 con health check, volúmenes persistentes. Frontend se agregará en fase 2 del MVP.
+Use Docker Compose with a single `docker/docker-compose.yml` file. Backend with multi-stage Dockerfile, Postgres 16 with health check, persistent volumes. Frontend will be added in MVP phase 2.
 
 # Why
 
-- Docker Compose es el estándar para desarrollo local de microservicios
-- Multi-stage build mantiene la imagen de producción pequeña (solo runtime, no SDK)
-- Health check en Postgres evita race conditions al iniciar backend
-- Un solo archivo docker-compose.yml es suficiente para MVP — evita overengineering con Docker Swarm/K8s
+- Docker Compose is the standard for local microservice development
+- Multi-stage build keeps the production image small (runtime only, no SDK)
+- Health check in Postgres avoids race conditions when starting backend
+- A single docker-compose.yml file is sufficient for MVP — avoids overengineering with Docker Swarm/K8s
 
 # Consequences
 
-- El equipo necesita Docker Desktop en Windows
-- La base de datos se persiste en un volumen nombrado (pgdata)
-- Agregar frontend solo requiere añadir un service al compose
+- The team needs Docker Desktop on Windows
+- The database is persisted in a named volume (pgdata)
+- Adding frontend only requires adding a service to the compose file

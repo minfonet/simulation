@@ -11,38 +11,38 @@ agent: lead
 
 # Findings
 
-- El workflow LEAD → IMPLEMENTER → REVIEWER funcionó correctamente en ambas tandas
-- El reviewer detectó 7 findings adicionales en batch 2 (todos low severity), confirmando que el proceso de revisión agrega valor real
-- Los findings del reviewer se corrigieron directamente por el LEAD (cambios triviales)
-- El reviewer ahora cruza memorias de bugs/learnings automáticamente y tiene contexto de runtime environments (server vs browser)
-- El implementer también actualizó active-context.md y los bug memories por su cuenta — buena señal de autonomía
+- The LEAD → IMPLEMENTER → REVIEWER workflow worked correctly in both batches
+- The reviewer detected 7 additional findings in batch 2 (all low severity), confirming that the review process adds real value
+- The reviewer's findings were fixed directly by the LEAD (trivial changes)
+- The reviewer now automatically cross-checks bug/learning memories and has runtime environment context (server vs browser)
+- The implementer also updated active-context.md and bug memories independently — a good signal of autonomy
 
 # Fixes Applied
 
 ## Batch 1 (trivial)
-- 3: VehicleController — agregado ContactMonitor/MaxContactsReported
-- 4: AdminController — return type corregido
-- 5: AdminController — PasswordService inyectado via DI
-- 8: proxy.ts — removido cookie check (incompatible con localStorage)
+- 3: VehicleController — added ContactMonitor/MaxContactsReported
+- 4: AdminController — corrected return type
+- 5: AdminController — PasswordService injected via DI
+- 8: proxy.ts — removed cookie check (incompatible with localStorage)
 
 ## Batch 2 (moderate)
-- 10: Nuevo endpoint GET /api/auth/me + frontend validateSession()
-- 9: Token refresh interceptor en api.ts con retry queue
+- 10: New GET /api/auth/me endpoint + frontend validateSession()
+- 9: Token refresh interceptor in api.ts with retry queue
 
-## Post-review fixes (de los 7 findings del reviewer)
-- 10.2: setLoading movido a finally block
-- 10.3: redirect a /login en catch de validateSession
-- 9.1: null guard para newToken
-- 9.3: field check antes de overwritear user en refreshAuth
-- 9.2: catch simplificado (sin duplicación)
-- CC.1: cleanup de setOnSessionExpired en useEffect
+## Post-review fixes (from the reviewer's 7 findings)
+- 10.2: setLoading moved to finally block
+- 10.3: redirect to /login in validateSession catch
+- 9.1: null guard for newToken
+- 9.3: field check before overwriting user in refreshAuth
+- 9.2: simplified catch (no duplication)
+- CC.1: setOnSessionExpired cleanup in useEffect
 
 # Problems
 
-- 10.1 (crear DTO para auth/me) no se implementó — severidad baja, se difiere
-- El reviewer encontró 7 issues que el implementer no detectó en self-review — confirma que la revisión cruzada es necesaria
+- 10.1 (create DTO for auth/me) was not implemented — low severity, deferred
+- The reviewer found 7 issues that the implementer did not detect in self-review — confirms that cross-review is necessary
 
 # Next Steps
 
-- Batch 3: docs desactualizadas (items 1 y 11) si aplica
-- Integration tests (item 10 del plan MVP)
+- Batch 3: outdated docs (items 1 and 11) if applicable
+- Integration tests (item 10 from the MVP plan)

@@ -9,18 +9,18 @@ tags:
 
 # Topic
 
-Godot 4 C# tiene diferencias importantes respecto a Godot 3 y GDScript.
+Godot 4 C# has important differences compared with Godot 3 and GDScript.
 
 # Details
 
-- **ContactMonitor**: RigidBody3D requiere `ContactMonitor = true` y `MaxContactsReported > 0` para que `BodyEntered` se dispare. En Godot 3 esto no era necesario.
-- **OS.GetCmdlineArgs()**: Funciona en standalone. En el editor de Godot 4, los CLI args se configuran en Debug → Customize Run → Arguments (no se pasan automáticamente).
-- **Señales en C#**: Se conectan con `BodyEntered += Handler` (eventos C#), no con `Connect("body_entered", this, "MethodName")` como en GDScript.
-- **Mathf**: Godot 4 C# tiene `Mathf` como clase estática con métodos como `MoveToward`, `Lerp`, `Clamp`.
-- **Input**: Se usa `Input.IsActionPressed("action_name")` con las actions definidas en `project.godot`.
-- **HttpClient**: Funciona en Godot 4 C# sin problemas. Alternativa nativa: nodo `HTTPRequest`.
-- **.csproj**: Usa `Godot.NET.Sdk/4.4.x` con `net8.0`. No hereda de Microsoft.NET.Sdk.
+- **ContactMonitor**: RigidBody3D requires `ContactMonitor = true` and `MaxContactsReported > 0` for `BodyEntered` to fire. In Godot 3 this was not necessary.
+- **OS.GetCmdlineArgs()**: Works in standalone. In the Godot 4 editor, CLI args are configured in Debug → Customize Run → Arguments (they are not passed automatically).
+- **Signals in C#**: Connected with `BodyEntered += Handler` (C# events), not with `Connect("body_entered", this, "MethodName")` as in GDScript.
+- **Mathf**: Godot 4 C# has `Mathf` as a static class with methods such as `MoveToward`, `Lerp`, `Clamp`.
+- **Input**: Uses `Input.IsActionPressed("action_name")` with actions defined in `project.godot`.
+- **HttpClient**: Works in Godot 4 C# without issues. Native alternative: `HTTPRequest` node.
+- **.csproj**: Uses `Godot.NET.Sdk/4.4.x` with `net8.0`. Does not inherit from Microsoft.NET.Sdk.
 
 # Impact
 
-Código escrito para Godot 3 o basado en GDScript no es directamente portable. Verificar siempre la sintaxis C# de Godot 4.
+Code written for Godot 3 or based on GDScript is not directly portable. Always verify Godot 4 C# syntax.

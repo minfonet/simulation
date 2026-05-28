@@ -13,25 +13,25 @@ agent: lead
 
 # Findings
 
-- create-next-app genera Next.js 16.2.6 con Tailwind v4 por defecto
-- Tailwind v4 usa `@import "tailwindcss"` en vez de las directivas `@tailwind` de v3
-- Next.js 16 cambia `middleware.ts` por `proxy.ts` y la función exportada pasa a llamarse `proxy`
-- Los `params` y `searchParams` son Promises en Next.js 16 — hay que usar `async/await` o `use()`
-- El scaffolding completo requirió ~25 archivos: 4 layouts, 12 pages, 7 UI components, 2 layout components, 3 lib files
+- create-next-app generates Next.js 16.2.6 with Tailwind v4 by default
+- Tailwind v4 uses `@import "tailwindcss"` instead of the v3 `@tailwind` directives
+- Next.js 16 changes `middleware.ts` to `proxy.ts`, and the exported function becomes `proxy`
+- `params` and `searchParams` are Promises in Next.js 16 — use `async/await` or `use()`
+- Complete scaffolding required ~25 files: 4 layouts, 12 pages, 7 UI components, 2 layout components, 3 lib files
 
 # Problems
 
-- proxy.ts verifica cookies pero el frontend usa localStorage — el proxy no protege rutas realmente (redirige siempre a /login en page refresh)
-- No hay mecanismo de token refresh — si el JWT expira (60 min), las llamadas fallan sin recuperación
-- api.delete retorna Promise<T> pero DELETE devuelve 204 — el tipo genérico es impreciso
+- proxy.ts checks cookies but the frontend uses localStorage — the proxy does not really protect routes (always redirects to /login on page refresh)
+- There is no token refresh mechanism — if the JWT expires (60 min), calls fail without recovery
+- api.delete returns Promise<T> but DELETE returns 204 — the generic type is imprecise
 
 # Decisions Made
 
-- Usar localStorage para tokens JWT en lugar de cookies (simplicidad MVP, aunque rompe proxy.ts)
-- AuthContext como Client Component con React Context + useAuth hook
-- UI components hechos a mano (sin shadcn CLI) para evitar dependencias interactivas
-- Sidebar con menú dinámico según rol del usuario
-- Output mode "standalone" en next.config.ts para Docker multi-stage
+- Use localStorage for JWT tokens instead of cookies (MVP simplicity, although it breaks proxy.ts)
+- AuthContext as Client Component with React Context + useAuth hook
+- Hand-built UI components (without shadcn CLI) to avoid interactive dependencies
+- Sidebar with dynamic menu by user role
+- Output mode "standalone" in next.config.ts for multi-stage Docker
 
 # Memories Created
 
@@ -42,6 +42,6 @@ agent: lead
 
 # Next Steps
 
-- Corregir proxy.ts para que no intente leer cookie que no existe (remover check server-side)
-- Agregar token refresh interceptor en api.ts
-- Iniciar simulación Godot 4
+- Fix proxy.ts so it does not try to read a cookie that does not exist (remove server-side check)
+- Add token refresh interceptor in api.ts
+- Start Godot 4 simulation

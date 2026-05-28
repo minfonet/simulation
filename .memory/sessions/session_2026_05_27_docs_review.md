@@ -13,23 +13,23 @@ agent: lead
 
 # Findings
 
-- Se encontraron 12 inconsistencias en la revisión integral (documentadas en docs/99-reference/architecture-review.md)
-- Las más críticas: ContactMonitor faltante en Godot, proxy.ts incompatible con localStorage, DI inconsistente en AdminController
-- user-flows.md estaba vacío — se completó con 7 secciones de flujos + diagramas + route map
-- run-and-debug.md estaba desactualizado (faltaba frontend, Godot, debugging sections)
-- Los agentes LEAD/IMPLEMENTER/REVIEWER estaban definidos pero el workflow no se ejecutaba — las reglas eran optativas ("Prefer delegation")
+- Found 12 inconsistencies in the comprehensive review (documented in docs/99-reference/architecture-review.md)
+- Most critical: missing ContactMonitor in Godot, proxy.ts incompatible with localStorage, inconsistent DI in AdminController
+- user-flows.md was empty — completed with 7 flow sections + diagrams + route map
+- run-and-debug.md was outdated (missing frontend, Godot, debugging sections)
+- LEAD/IMPLEMENTER/REVIEWER agents were defined but the workflow was not executed — rules were optional ("Prefer delegation")
 
 # Problems
 
-- El workflow LEAD → IMPLEMENTER → REVIEWER no se siguió en ninguna de las 3 fases del MVP (backend, frontend, godot) — todo se implementó directamente
-- architecture-review.md reveló issues que un reviewer habría detectado antes de mergear
-- Las reglas de workflow en active-context.md y .opencode/agents/lead.md eran aspiracionales, no vinculantes
+- The LEAD → IMPLEMENTER → REVIEWER workflow was not followed in any of the 3 MVP phases (backend, frontend, godot) — everything was implemented directly
+- architecture-review.md revealed issues that a reviewer would have detected before merging
+- Workflow rules in active-context.md and .opencode/agents/lead.md were aspirational, not binding
 
 # Decisions Made
 
-- Cambiar reglas de "Prefer delegation" a "Delegate ALL implementation / ALL review" con excepción única para cambios triviales
-- Agregar Workflow Rules (mandatory) en active-context.md con los 6 pasos del pipeline
-- Las findings de architecture-review.md se priorizan por ROI en el mismo documento
+- Change rules from "Prefer delegation" to "Delegate ALL implementation / ALL review" with a single exception for trivial changes
+- Add Workflow Rules (mandatory) to active-context.md with the 6 pipeline steps
+- architecture-review.md findings are prioritized by ROI in the same document
 
 # Memories Created
 
@@ -39,5 +39,5 @@ agent: lead
 
 # Next Steps
 
-- Ejecutar las correcciones de architecture-review.md por orden de prioridad
-- La siguiente fase debe seguir el workflow obligatorio: LEAD → IMPLEMENTER → REVIEWER
+- Execute architecture-review.md fixes by priority order
+- The next phase must follow the mandatory workflow: LEAD → IMPLEMENTER → REVIEWER

@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace DrivingSim;
 
@@ -16,12 +17,25 @@ public partial class VehicleController : RigidBody3D
 
     public struct TelemetryPoint
     {
+        [JsonPropertyName("timestamp")]
         public DateTime Timestamp { get; set; }
+
+        [JsonPropertyName("speed")]
         public double Speed { get; set; }
+
+        [JsonPropertyName("steeringAngle")]
         public double SteeringAngle { get; set; }
+
+        [JsonPropertyName("positionX")]
         public double PositionX { get; set; }
+
+        [JsonPropertyName("positionY")]
         public double PositionY { get; set; }
+
+        [JsonPropertyName("positionZ")]
         public double PositionZ { get; set; }
+
+        [JsonPropertyName("collision")]
         public bool Collision { get; set; }
     }
 

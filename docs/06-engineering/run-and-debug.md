@@ -8,8 +8,8 @@
 | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Latest | `docker --version` | ✅ v29.5.2 |
 | [Node.js](https://nodejs.org/) | 20+ | `node --version` | ✅ v24 |
 | [Git](https://git-scm.com/) | Any | `git --version` | ✅ |
-| [.NET SDK](https://dotnet.microsoft.com/download) | 10.0+ | `dotnet --version` | ❌ NO INSTALADO |
-| [Godot 4 .NET](https://godotengine.org/download) | 4.x | `godot --version` | ❌ NO INSTALADO |
+| [.NET SDK](https://dotnet.microsoft.com/download) | 10.0+ | `dotnet --version` | ✅ 10.0.300 |
+| [Godot 4 .NET](https://godotengine.org/download) | 4.6.3 Mono | `godot --version` | ✅ `C:\Projects\ia\core\Godot_v4.6.3-stable_mono_win64` |
 
 ### Optional
 | Tool | Purpose | Status |
@@ -136,21 +136,79 @@ npm run test:watch
 
 ### Backend (SimApi)
 
-No .NET SDK is available on the development machine. xUnit integration tests have been scoped but require a machine with `dotnet` to run.
+The backend uses **xUnit** + **WebApplicationFactory** for integration tests.
+
+```bash
+dotnet test tests/SimApi.IntegrationTests/SimApi.IntegrationTests.csproj
+```
+
+#### What's tested
+
+| Test area | Coverage | Tests |
+|---|---|---|
+| Health | `/health` endpoint | 1 |
+| Auth | register, login, refresh, `/auth/me`, duplicate email, invalid credentials | 7 |
+| Admin | organizations and users CRUD/invite flows | 7 |
+| Instructor | session creation, retrieval, evaluation flows | 7 |
+| Trainee | session list/start/finish flows | 7 |
+| Telemetry | ingestion and retrieval | 5 |
+| Security | 401/403 auth and role boundaries | 9 |
+| Validation | invalid payloads and bad data | 7 |
+
+**Database:** tests use SQLite in-memory for speed and isolation. Add PostgreSQL/Testcontainers coverage if a change depends on provider-specific behavior.
 
 ### Godot Simulation
 
-No Godot 4 runtime is available on the development machine. Script tests are scoped but cannot execute locally.
+Pure Godot-adjacent tests use **xUnit** and target the simulation project contracts.
+
+```bash
+dotnet test tests/GodotSim.Tests/GodotSim.Tests.csproj
+```
+
+These tests cover BackendClient payload compatibility and telemetry data structures. Engine-bound behavior such as `VehicleController` physics still requires Godot headless/editor execution or extracting more pure logic.
+
+### E2E Smoke Test
+
+The E2E smoke test runs against a running API and self-seeds the bootstrap organization through Docker Compose PostgreSQL by default.
+
+```bash
+# Start services first
+docker compose -f docker/docker-compose.yml up -d --build
+
+# Run smoke test
+pwsh tests/e2e/smoke-test.ps1
+```
+
+Use `-SkipBootstrapSeed` only when the target database is already seeded.
 
 ---
 
 ## Complete Happy Path (Manual Test)
+
+The admin organization endpoints require an authenticated Admin user. For a fully automated happy path, prefer `tests/e2e/smoke-test.ps1`, which seeds the bootstrap organization before registering the first admin.
+
+If running manually against Docker Compose, seed the first organization once:
+
+```bash
+docker compose -f docker/docker-compose.yml exec -T db psql -U postgres -d simulation -c "INSERT INTO \"Organizations\" (\"Id\", \"Name\", \"CreatedAt\") VALUES ('00000000-0000-0000-0000-000000000001', 'Bootstrap Org', NOW()) ON CONFLICT (\"Id\") DO NOTHING;"
+```
+
+Then register the first admin against that organization:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/register ^
+  -H "Content-Type: application/json" ^
+  -d "{\"email\":\"admin@abc.com\",\"password\":\"123456\",\"name\":\"Admin\",\"role\":\"Admin\",\"organizationId\":\"00000000-0000-0000-0000-000000000001\"}"
+```
+
+Save the returned `accessToken` as `<admin-token>`.
 
 ### Step 1: Create an organization
 
 ```bash
 curl -X POST http://localhost:8080/api/admin/organizations ^
   -H "Content-Type: application/json" ^
+  -H "Authorization: Bearer <admin-token>" ^
   -d "{\"name\":\"ABC Driving School\"}"
 ```
 
@@ -159,20 +217,17 @@ Save the returned `id` — this is your `OrganizationId`.
 ### Step 2: Register users
 
 ```bash
-# Register Admin
-curl -X POST http://localhost:8080/api/auth/register ^
-  -H "Content-Type: application/json" ^
-  -d "{\"email\":\"admin@abc.com\",\"password\":\"123456\",\"name\":\"Admin\",\"role\":\"Admin\",\"organizationId\":\"<org-id>\"}"
-
 # Register Instructor
-curl -X POST http://localhost:8080/api/auth/register ^
+curl -X POST http://localhost:8080/api/admin/organizations/<org-id>/users ^
   -H "Content-Type: application/json" ^
-  -d "{\"email\":\"instructor@abc.com\",\"password\":\"123456\",\"name\":\"Mary\",\"role\":\"Instructor\",\"organizationId\":\"<org-id>\"}"
+  -H "Authorization: Bearer <admin-token>" ^
+  -d "{\"email\":\"instructor@abc.com\",\"password\":\"123456\",\"name\":\"Mary\",\"role\":\"Instructor\"}"
 
 # Register Trainee
-curl -X POST http://localhost:8080/api/auth/register ^
+curl -X POST http://localhost:8080/api/admin/organizations/<org-id>/users ^
   -H "Content-Type: application/json" ^
-  -d "{\"email\":\"trainee@abc.com\",\"password\":\"123456\",\"name\":\"John\",\"role\":\"Trainee\",\"organizationId\":\"<org-id>\"}"
+  -H "Authorization: Bearer <admin-token>" ^
+  -d "{\"email\":\"trainee@abc.com\",\"password\":\"123456\",\"name\":\"John\",\"role\":\"Trainee\"}"
 ```
 
 Save each user's `userId` from the responses.
@@ -324,17 +379,17 @@ docker compose -f docker/docker-compose.yml logs --tail=100 backend
 ### Database inspection
 
 ```bash
-# Direct psql
-docker exec -it sim-db psql -U postgres -d simulation
+# Direct psql through Docker Compose
+docker compose -f docker/docker-compose.yml exec db psql -U postgres -d simulation
 
 # List tables
-docker exec -it sim-db psql -U postgres -d simulation -c "\dt"
+docker compose -f docker/docker-compose.yml exec db psql -U postgres -d simulation -c "\dt"
 
 # Query users
-docker exec -it sim-db psql -U postgres -d simulation -c "SELECT id, email, name, role FROM \"Users\";"
+docker compose -f docker/docker-compose.yml exec db psql -U postgres -d simulation -c "SELECT id, email, name, role FROM \"Users\";"
 
 # Query sessions
-docker exec -it sim-db psql -U postgres -d simulation -c "SELECT id, status, score FROM \"SimulationSessions\";"
+docker compose -f docker/docker-compose.yml exec db psql -U postgres -d simulation -c "SELECT id, status, score FROM \"SimulationSessions\";"
 
 # Or use pgAdmin
 # Host: localhost, Port: 5432, User: postgres, Password: postgres, Database: simulation

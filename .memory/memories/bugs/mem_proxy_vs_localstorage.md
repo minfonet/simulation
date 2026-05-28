@@ -10,25 +10,25 @@ tags:
 
 # Issue
 
-proxy.ts verifica `request.cookies.get("accessToken")` pero el frontend almacena el token en `localStorage`. El proxy (server-side) no puede leer localStorage. En page refresh, el proxy redirige a /login aunque el usuario esté autenticado.
+proxy.ts checks `request.cookies.get("accessToken")`, but the frontend stores the token in `localStorage`. The proxy (server-side) cannot read localStorage. On page refresh, the proxy redirects to /login even though the user is authenticated.
 
 # Root cause
 
-proxy.ts se escribió asumiendo cookies (patrón común en Next.js), pero auth-context.tsx se implementó con localStorage (decisión explícita por simplicidad). No hubo revisión cruzada entre ambos archivos.
+proxy.ts was written assuming cookies (a common Next.js pattern), but auth-context.tsx was implemented with localStorage (an explicit decision for simplicity). There was no cross-review between both files.
 
 # Impact
 
-Alto en page refresh (redirect loop), bajo en navegación SPA (client-side navigation no pasa por proxy en dev).
+High on page refresh (redirect loop), low in SPA navigation (client-side navigation does not go through proxy in dev).
 
 # Fix
 
-Opción A (recomendada MVP): proxy.ts solo debe hacer `NextResponse.next()` y dejar la autenticación al backend + AuthProvider del frontend.
-Opción B: Migrar a cookies para que el proxy pueda leer el token.
+Option A (recommended MVP): proxy.ts should only call `NextResponse.next()` and leave authentication to the backend + frontend AuthProvider.
+Option B: Migrate to cookies so the proxy can read the token.
 
 # Status
 
 ✅ Fixed 2026-05-27 — applied Option A: proxy function body replaced with `return NextResponse.next()`.
 
-# Referencia
+# Reference
 
 docs/99-reference/architecture-review.md — item 8

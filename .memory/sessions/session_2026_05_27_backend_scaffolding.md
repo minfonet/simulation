@@ -11,32 +11,32 @@ agent: lead
 
 # Findings
 
-- .NET SDK no está disponible en la máquina de desarrollo, pero los archivos .csproj y .cs se crearon manualmente sin problema
-- El scaffolding completo requirió ~25 archivos: modelos, DTOs, servicios, controladores, Docker
-- La estructura de carpetas definida en mdvp.md se pudo seguir sin desviaciones
+- .NET SDK is not available on the development machine, but the .csproj and .cs files were created manually without issue
+- Complete scaffolding required ~25 files: models, DTOs, services, controllers, Docker
+- The folder structure defined in mdvp.md could be followed without deviations
 
 # Problems
 
-- No se encontró .NET SDK — no se pudo verificar `dotnet build`
-- Los agentes (lead/implementer/reviewer) están definidos pero opencode no se ha reiniciado, así que el workflow multi-agente no se ha ejecutado realmente
-- La máquina es Windows 11 — requiere Docker Desktop con WSL2
+- .NET SDK was not found — `dotnet build` could not be verified
+- Agents (lead/implementer/reviewer) are defined but opencode has not been restarted, so the multi-agent workflow has not actually run
+- The machine is Windows 11 — requires Docker Desktop with WSL2
 
 # Decisions Made
 
-- Se definieron 3 agentes en `.opencode/agents/` con modo subagent
-- Se eligió JWT simétrico (HMAC-SHA256) para auth MVP
-- Se usó `EnsureCreated()` en lugar de migrations para simplificar el bootstrap
-- Se optó por REST batch polling para telemetría en lugar de SignalR (post-MVP)
-- No se incluyó TimescaleDB — PostgreSQL vanilla suficiente para MVP
-- Se creó `docs/06-engineering/run-and-debug.md` con guía completa de ejecución y debugging
+- Defined 3 agents in `.opencode/agents/` with subagent mode
+- Chose symmetric JWT (HMAC-SHA256) for MVP auth
+- Used `EnsureCreated()` instead of migrations to simplify bootstrap
+- Chose REST batch polling for telemetry instead of SignalR (post-MVP)
+- Did not include TimescaleDB — vanilla PostgreSQL is sufficient for MVP
+- Created `docs/06-engineering/run-and-debug.md` with a complete run and debugging guide
 
 # Memories Created
 
-- Ninguna aún (las decisiones de scaffolding son estándar, no requieren memoria persistente)
+- None yet (scaffolding decisions are standard and do not require persistent memory)
 
 # Next Steps
 
-- Reiniciar opencode para activar el workflow multi-agente
-- Iniciar frontend Next.js (auth + dashboards)
-- Luego simulación Godot 4
-- Finalmente integración vertical y pruebas
+- Restart opencode to activate the multi-agent workflow
+- Start Next.js frontend (auth + dashboards)
+- Then Godot 4 simulation
+- Finally vertical integration and tests

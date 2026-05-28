@@ -334,31 +334,106 @@
 
 ---
 
-## 6. Error / Edge Case Flows
+## 6. Target Evaluation Flow / Requested Target Flows
 
-### 6.1 Invalid credentials
+This section documents the requested target operating flow for the MVP and compares it with the current state. Scope remains minimal: one functional base preset, basic launch/handoff to Godot, a test with no time limit, minimal critical events, and a basic report for manual grading by Evaluator/Instructor.
+
+### 6.1 Target flow summary
+
+```
+1. Admin creates an organization.
+2. Admin invites users with Evaluator/Instructor and Evaluated/Trainee roles.
+3. Evaluator/Instructor defines an evaluation:
+   - selects the Evaluated/Trainee;
+   - selects a functional base scenario preset, for example `default`/`base`;
+   - creates a Pending session associated with the preset.
+4. Evaluated/Trainee enters the portal, opens a Pending session, and launches Godot.
+5. The handoff to Godot passes `sessionId`, `apiUrl`, and an authorization/token strategy.
+6. Godot runs the test with no product time limit; the user/session decides when it ends.
+7. During the simulation, telemetry is ingested and minimal critical events are recorded.
+8. After finishing, the Evaluator/Instructor opens the basic report, reviews events/telemetry, and grades the session.
+9. Evaluated/Trainee views the score, comments, and final status.
+```
+
+### 6.2 Current state vs target/gap
+
+| Flow | Current state | MVP target | Minimum gap |
+|---|---|---|---|
+| Admin creates organization | Backend/API tests cover the main path. The E2E smoke test includes this path, but it has not yet been run against live Docker Compose services. The frontend exists. | Admin can create an organization and see UI confirmation. | Direct Admin component/page tests and E2E execution with live services are missing. |
+| Evaluator defines evaluation | Instructor creates `SimulationSession` with `traineeId` and free-text/default `scenario`. | Instructor chooses an explicit, versionable base preset, then creates a pending session. | Preset contract/listing, UI selector, backend validation, and preset mapping to the base Godot scene/config are missing. |
+| Evaluated launches Godot | Frontend marks the session active with `POST /start`; Godot is not launched from the UI. | Start button initiates a real handoff to Godot with `sessionId`, `apiUrl`, and authorization. | Launch/handoff mechanism, packaging/URI/protocol definition, and auth/token strategy for Godot are missing. |
+| Test with no time limit | No time limit is documented/enforced; the session ends by action/API. | There is no product time limit for the MVP; finishing is an explicit user/simulation action. | Acceptance must ensure that no mandatory timeout is added accidentally. |
+| Critical events | Current telemetry: speed, steering, position, and collision boolean. | Record minimal critical events, at least collision, with timestamp/severity/type for the report. | Critical event model/contract, derivation from telemetry or explicit emission, storage, and visualization are missing. |
+| Final report | Instructor sees a telemetry table and grades manually. | Instructor sees a basic report with session summary, critical events, and relevant telemetry before grading. | Report endpoint/query, report UI, content criteria, and tests are missing. |
+| Tests | Backend 50/50, frontend lib 23/23, Godot client 12/12; E2E smoke syntax validated. | Tests verify the real Admin → Instructor → Trainee → Godot/handoff → telemetry/events → report/evaluation flow. | Page tests, preset/event/report contracts, Godot auth, E2E execution with live services, and boundary coverage are missing. |
+
+### 6.3 Verifiable acceptance criteria by flow
+
+#### Admin creates organization
+
+- Given an authenticated Admin user, when they create an organization with a valid name, the backend responds with `201` and the organization appears in the UI list.
+- The flow rejects non-Admin users with `401/403` as appropriate.
+- Backend authorization/creation tests and page or component tests cover success and visible error states.
+
+#### Evaluator/Instructor defines evaluation with base preset
+
+- Given an authenticated Instructor, the UI shows at least one functional base preset (`default`/`base`) from an explicit contract, not unvalidated free text.
+- When creating the session, the backend persists a stable preset reference and the session remains `Pending`.
+- The selected preset has documented mapping to the existing MVP Godot scene/configuration.
+- The preset contract is covered by backend/frontend tests; if Godot consumes the value, a producer/consumer compatibility test must exist.
+
+#### Evaluated/Trainee launches Godot and runs an untimed test
+
+- Given an authenticated Trainee with a `Pending` session, pressing Start activates the session and performs a verifiable handoff to Godot.
+- The handoff includes `sessionId`, `apiUrl`, and an explicit authorization/token strategy for Godot; it must not depend on embedded credentials.
+- Godot can start the session and send authorized telemetry for that session.
+- There is no mandatory product timeout for finishing; the session ends through an explicit finish/controlled-close action.
+- Launch errors or invalid tokens are shown to the user and do not leave the session in an ambiguous unmanaged state.
+
+#### Critical events and final report
+
+- During or after the simulation, minimal critical events are recorded, at least collisions, with `sessionId`, timestamp, type, and basic severity.
+- The Evaluator can open a basic report for a completed session with summary, critical events, and references to relevant telemetry.
+- The Evaluator can save score/comments after reviewing the report.
+- The Trainee can view final score/comments.
+- Contract and authorization tests exist for telemetry, critical event, and report ingestion/query.
+
+### 6.4 Required boundaries for the missing work
+
+- **Telemetry pipeline**: new telemetry, critical event, and reporting implementations must go through ingestion/storage/query boundaries such as `ITelemetryIngestor`, `ITelemetryStore`, and an equivalent query/report service. Do not add new persistence directly from controllers.
+- **Session/evaluation backend module**: session creation, presets, and evaluation should live behind application services/stores when they grow beyond the current CRUD behavior; controllers should stay thin.
+- **Frontend adapter**: Next.js pages should orchestrate UI and call contracts; they must not contain evaluation/reporting rules or deep scenario mapping.
+- **Godot adapter/core**: Godot APIs (`Node`, `RigidBody3D`, `Input`, `OS`, `GD`) must stay in adapters/node scripts. Argument parsing, session client, telemetry creation, and event rules should be extracted to pure classes when feasible.
+- **HAL**: when expanding controls beyond the keyboard MVP, input must go through an abstraction such as `IControlInputProvider`; do not add HID/serial/vendor SDK code outside a HAL adapter.
+- **Shared contracts**: presets, launch arguments, telemetry, critical events, and reports must be explicit, versionable, and covered by producer/consumer tests.
+
+---
+
+## 7. Error / Edge Case Flows
+
+### 7.1 Invalid credentials
 ```
 Login → 401 → Show "Invalid email or password" → Stay on /login
 ```
 
-### 6.2 Session not in correct state
+### 7.2 Session not in correct state
 ```
 Start a non-Pending session → 400 → Show "Session is not in pending status"
 Evaluate a non-Completed session → 400 → Evaluation form disabled
 ```
 
-### 6.3 Email already registered
+### 7.3 Email already registered
 ```
 Register with existing email → 409 → Show "Email already registered"
 ```
 
-### 6.4 Unauthorized access
+### 7.4 Unauthorized access
 ```
 Access /admin without Admin role → 403 → Backend rejects
 Frontend proxy redirects to /login if no token
 ```
 
-### 6.5 Network error / backend down
+### 7.5 Network error / backend down
 ```
 API call fails → Frontend shows error message
 Godot: GD.PrintErr, keeps driving (telemetry lost)
@@ -366,7 +441,7 @@ Godot: GD.PrintErr, keeps driving (telemetry lost)
 
 ---
 
-## 7. Route Map (Frontend)
+## 8. Route Map (Frontend)
 
 | Path | Role | Page |
 |---|---|---|

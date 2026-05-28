@@ -9,21 +9,21 @@ tags:
 
 # Context
 
-Necesitábamos decidir cómo crear el esquema de base de datos en el MVP. Opciones: migrations de EF Core, EnsureCreated(), o scripts SQL manuales.
+We needed to decide how to create the database schema in the MVP. Options: EF Core migrations, EnsureCreated(), or manual SQL scripts.
 
 # Decision
 
-Usar `EnsureCreated()` en `Program.cs` al iniciar la aplicación. Sin migrations en el MVP.
+Use `EnsureCreated()` in `Program.cs` when the application starts. No migrations in the MVP.
 
 # Why
 
-- EnsureCreated() crea todas las tablas automáticamente desde el DbContext
-- Elimina la necesidad de ejecutar `dotnet ef migrations add` manualmente
-- Para un MVP con 5 tablas y sin esquemas complejos, las migrations son overengineering
-- Cuando el modelo madure, se migrará a migrations formales
+- EnsureCreated() creates all tables automatically from the DbContext
+- Eliminates the need to run `dotnet ef migrations add` manually
+- For an MVP with 5 tables and no complex schemas, migrations are overengineering
+- When the model matures, it will migrate to formal migrations
 
 # Consequences
 
-- No hay historial de cambios de esquema (no aplica hasta que haya datos en producción)
-- Para agregar una columna hay que borrar la BD o agregarla manualmente
-- Swap a migrations será necesario antes de cualquier despliegue real
+- No schema change history (not applicable until there is production data)
+- To add a column, the DB must be deleted or updated manually
+- Swapping to migrations will be required before any real deployment

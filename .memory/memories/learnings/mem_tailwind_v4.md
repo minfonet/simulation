@@ -9,16 +9,16 @@ tags:
 
 # Topic
 
-Tailwind CSS v4 cambia la configuración respecto a v3.
+Tailwind CSS v4 changes configuration compared with v3.
 
 # Details
 
-- No hay `tailwind.config.js` — la configuración va en `globals.css` con la directiva `@theme`
-- No se usan las directivas `@tailwind base/components/utilities` — solo `@import "tailwindcss"`
-- El PostCSS plugin es `@tailwindcss/postcss` (no `tailwindcss`)
-- Las variantes dark mode se configuran via `@variant` o media query directa en CSS
-- No hay `darkMode: "class"` en config — se usa `@custom-variant dark (&:is(.dark *))` si se necesita modo oscuro por clase
+- There is no `tailwind.config.js` — configuration lives in `globals.css` with the `@theme` directive
+- The `@tailwind base/components/utilities` directives are not used — only `@import "tailwindcss"`
+- The PostCSS plugin is `@tailwindcss/postcss` (not `tailwindcss`)
+- Dark mode variants are configured via `@variant` or direct media query in CSS
+- There is no `darkMode: "class"` in config — use `@custom-variant dark (&:is(.dark *))` if class-based dark mode is needed
 
 # Impact
 
-Si alguien intenta crear un `tailwind.config.js` con la sintaxis v3, no tendrá efecto. Toda la configuración de tema debe ir en CSS.
+If someone tries to create a `tailwind.config.js` with v3 syntax, it will have no effect. All theme configuration must live in CSS.

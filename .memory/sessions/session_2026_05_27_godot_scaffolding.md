@@ -12,23 +12,23 @@ agent: lead
 
 # Findings
 
-- Godot 4 C# usa Godot.NET.Sdk/4.4.1 con target net8.0
-- RigidBody3D requiere `ContactMonitor = true` y `MaxContactsReported > 0` para que el evento `BodyEntered` funcione — esto no estaba en la implementación inicial
-- OS.GetCmdlineArgs() funciona en standalone pero no devuelve args en editor — hay que configurarlos manualmente en Debug > Customize Run > Arguments
-- Las escenas .tscn son archivos de texto con formato Godot 4 — se pueden crear manualmente sin el editor
+- Godot 4 C# uses Godot.NET.Sdk/4.4.1 with target net8.0
+- RigidBody3D requires `ContactMonitor = true` and `MaxContactsReported > 0` for the `BodyEntered` event to work — this was not in the initial implementation
+- OS.GetCmdlineArgs() works in standalone but does not return args in the editor — configure them manually in Debug > Customize Run > Arguments
+- .tscn scenes are text files with Godot 4 format — they can be created manually without the editor
 
 # Problems
 
-- No hay Godot 4 instalado en la máquina de desarrollo — no se pudo verificar la escena ni compilar el proyecto C#
-- BackendClient usa async void — funcional para fire-and-forget pero cualquier excepción no atrapada dentro del try-crash-ea la app
-- Collision detection no funciona hasta que se agregue ContactMonitor = true
+- Godot 4 is not installed on the development machine — could not verify the scene or compile the C# project
+- BackendClient uses async void — functional for fire-and-forget, but any exception not caught inside the try crashes the app
+- Collision detection does not work until ContactMonitor = true is added
 
 # Decisions Made
 
-- Usar HttpClient de System.Net.Http en lugar del nodo HTTPRequest de Godot (más estándar para C#)
-- Telemetría se envía en batches cada 10 frames (~166ms a 60fps)
-- El vehículo es un RigidBody3D con fuerzas (no VehicleBody3D con ruedas) por simplicidad MVP
-- CLI args: --session-id (obligatorio), --token (opcional), --api-url (opcional con default localhost:8080)
+- Use HttpClient from System.Net.Http instead of Godot's HTTPRequest node (more standard for C#)
+- Telemetry is sent in batches every 10 frames (~166ms at 60fps)
+- The vehicle is a force-based RigidBody3D (not VehicleBody3D with wheels) for MVP simplicity
+- CLI args: --session-id (required), --token (optional), --api-url (optional with localhost:8080 default)
 
 # Memories Created
 
@@ -37,6 +37,6 @@ agent: lead
 
 # Next Steps
 
-- Instalar Godot 4 para probar la escena y compilar C#
-- Agregar ContactMonitor y MaxContactsReported al VehicleController
-- Probar integración con backend (start → telemetry → finish)
+- Install Godot 4 to test the scene and compile C#
+- Add ContactMonitor and MaxContactsReported to VehicleController
+- Test integration with backend (start → telemetry → finish)

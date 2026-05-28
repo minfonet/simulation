@@ -10,22 +10,22 @@ tags:
 
 # Context
 
-Necesitábamos almacenar el JWT en el frontend para incluirlo en los headers Authorization de las llamadas API. Opciones: localStorage, sessionStorage, cookies (HTTP-only o no).
+We needed to store the JWT in the frontend to include it in the Authorization headers for API calls. Options: localStorage, sessionStorage, cookies (HTTP-only or not).
 
 # Decision
 
-Usar localStorage para accessToken y refreshToken. El user object se guarda como JSON en localStorage para persistir sesión entre refreshes.
+Use localStorage for accessToken and refreshToken. The user object is stored as JSON in localStorage to persist the session across refreshes.
 
 # Why
 
-- localStorage sobrevive a cierres de pestaña (a diferencia de sessionStorage)
-- Es accesible desde JavaScript sin necesidad de endpoint backend (a diferencia de HTTP-only cookies)
-- Implementación directa: getItem/setItem en auth-context.tsx y api.ts
-- Suficiente para MVP — HTTP-only cookies se considerarán post-MVP cuando haya seguridad real
+- localStorage survives tab closes (unlike sessionStorage)
+- It is accessible from JavaScript without a backend endpoint (unlike HTTP-only cookies)
+- Direct implementation: getItem/setItem in auth-context.tsx and api.ts
+- Sufficient for MVP — HTTP-only cookies will be considered post-MVP when real security is needed
 
 # Consequences
 
-- proxy.ts no puede leer el token (corre en servidor) — auth server-side no funciona
-- Vulnerable a XSS (como cualquier localStorage) — aceptable para MVP
-- No hay server-side rendering authenticated — todas las páginas son Client Components
-- El token persiste hasta logout manual o localStorage.clear()
+- proxy.ts cannot read the token (runs on server) — server-side auth does not work
+- Vulnerable to XSS (like any localStorage) — acceptable for MVP
+- No authenticated server-side rendering — all pages are Client Components
+- The token persists until manual logout or localStorage.clear()

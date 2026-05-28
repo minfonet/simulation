@@ -9,18 +9,18 @@ tags:
 
 # Topic
 
-Next.js 16 introduce cambios breaking respecto a 14/15.
+Next.js 16 introduces breaking changes compared with 14/15.
 
 # Details
 
-- **middleware.ts → proxy.ts**: El archivo se renombra a `proxy.ts` y la función exportada pasa a llamarse `proxy`. Edge runtime ya no es soportado para proxy (solo Node.js).
-- **params y searchParams son Promises**: En layout y page components, `params` y `searchParams` deben resolverse con `await` (Server Component) o `use()` (Client Component).
-- **cookies() y headers() son async**: Deben usarse con `await`.
-- **Turbopack es default**: `next dev` y `next build` usan Turbopack. Para usar webpack custom hay que pasar `--webpack`.
-- **ESLint Flat Config es default**: `eslint.config.mjs` en vez de `.eslintrc.json`.
-- **React 19.2**: Incluye View Transitions, `useEffectEvent`, y Activity.
-- **Parallel Routes requieren default.js**: Ya no se infiere.
+- **middleware.ts → proxy.ts**: The file is renamed to `proxy.ts` and the exported function becomes `proxy`. Edge runtime is no longer supported for proxy (Node.js only).
+- **params and searchParams are Promises**: In layout and page components, `params` and `searchParams` must be resolved with `await` (Server Component) or `use()` (Client Component).
+- **cookies() and headers() are async**: They must be used with `await`.
+- **Turbopack is default**: `next dev` and `next build` use Turbopack. To use custom webpack, pass `--webpack`.
+- **ESLint Flat Config is default**: `eslint.config.mjs` instead of `.eslintrc.json`.
+- **React 19.2**: Includes View Transitions, `useEffectEvent`, and Activity.
+- **Parallel Routes require default.js**: It is no longer inferred.
 
 # Impact
 
-Cualquier tutorial o ejemplo de Next.js 14-15 puede no funcionar. Verificar siempre la documentación local en `node_modules/next/dist/docs/` antes de implementar.
+Any Next.js 14-15 tutorial or example may not work. Always verify local documentation in `node_modules/next/dist/docs/` before implementing.

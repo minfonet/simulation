@@ -57,7 +57,7 @@ Without this vertical integration there is no validatable product.
 2. Admin creates user "John" (Trainee) and "Instructor Mary" (Instructor)
 3. Mary logs in, creates session "Practice 1 - Sharp Turn" and assigns John
 4. John logs in, sees the assigned session, presses "Start simulation"
-5. Godot opens (or loads in web), John drives for 5 minutes
+5. Godot opens (or loads in web), John drives until explicit/manual/controlled completion (no mandatory time limit)
 6. Godot sends telemetry to backend POST /api/telemetry every 100ms
 7. John finishes the simulation
 8. Mary views recorded telemetry, assigns score and comments
@@ -256,13 +256,13 @@ Every frame (or every N frames):
 
 # Basic Prompts
 ## Run 1:
-Lead, inicia la fase 1 del MVP: scaffolding del backend con ASP.NET Core y Docker Compose
+Lead, start MVP phase 1: backend scaffolding with ASP.NET Core and Docker Compose
 
 ## Run 2:
-Lead, continúa con el MVP. Siguiente tarea: scaffolding del frontend Next.js
+Lead, continue with the MVP. Next task: Next.js frontend scaffolding
 
 ## Run 3:
-Lead, continúa con el MVP. Siguiente tarea: scaffolding del simulador Godot 4
+Lead, continue with the MVP. Next task: Godot 4 simulator scaffolding
 
 ## Run 4
 Set up frontend test infrastructure (Vitest) in sim-web, then write and run tests for api.ts, auth-context.tsx, and proxy.ts. Follow the workflow: delegate test infra setup to QA, then delegate test writing to QA, then review. Report coverage results.

@@ -27,7 +27,7 @@ Upgraded the backend ASP.NET Core project from .NET 8.0 to .NET 10.0.
 
 ## Not Changed (Intentionally)
 
-- `simulation/driving-sim/driving-sim.csproj` — Godot project, not the backend. Godot 4 uses `Godot.NET.Sdk/4.4.1` with `net8.0`. .NET 10 is not yet supported by Godot.
+- `simulation/driving-sim/driving-sim.csproj` — Godot project, not the backend. At this point it still used `Godot.NET.Sdk/4.4.1` with `net8.0`; this was later updated to `Godot.NET.Sdk/4.6.3` in `session_2026_05_28_consistency_fixes.md`.
 - `.memory/memories/learnings/mem_godot4_csharp.md` — documents Godot project's target framework (still accurate).
 - `.memory/sessions/session_2026_05_27_godot_scaffolding.md` — historical record, not modified.
 
@@ -42,6 +42,5 @@ Upgraded the backend ASP.NET Core project from .NET 8.0 to .NET 10.0.
 
 ## Next Steps
 
-- Install .NET SDK 10 on dev machine
-- Run `dotnet restore` and `dotnet build` to verify
-- Update run-and-debug.md status column from ❌ NO INSTALADO to ✅ after installation
+- Completed later on 2026-05-28: .NET SDK 10 installed and backend integration tests verified (50/50 passing).
+- Completed later on 2026-05-28: run-and-debug.md status column updated.
