@@ -22,7 +22,7 @@ public class TraineeControllerTests : IntegrationTestBase
         var createResp = await Client.PostAsJsonAsync("/api/instructor/sessions", new CreateSessionRequest
         {
             TraineeId = trainee.UserId,
-            Scenario = "trainee-test"
+            Scenario = "default"
         });
         var session = await DeserializeAsync<SessionResponse>(createResp);
         ClearAuthToken();

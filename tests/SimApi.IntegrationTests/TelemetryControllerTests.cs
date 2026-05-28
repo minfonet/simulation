@@ -24,7 +24,7 @@ public class TelemetryControllerTests : IntegrationTestBase
         var createResp = await Client.PostAsJsonAsync("/api/instructor/sessions", new CreateSessionRequest
         {
             TraineeId = trainee.UserId,
-            Scenario = "telemetry-test"
+            Scenario = "default"
         });
         var session = await DeserializeAsync<SessionResponse>(createResp);
 

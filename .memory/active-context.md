@@ -10,6 +10,7 @@ Flow compliance audit completed for Admin → Instructor/Evaluator → Trainee/E
 Flow gap and agent/skill readiness documentation completed (2026-05-28).
 English-only project artifact policy added and recent Spanish documentation/memory translated (2026-05-28).
 Five opencode project skills created, reviewed, and QA-validated (2026-05-28).
+P0 milestone completed (2026-05-28): base scenario preset with backend validation + frontend selector, Godot launch handoff with sessionId/apiUrl/token, all 85 tests passing.
 
 ## MVP Reference
 
@@ -144,7 +145,7 @@ Five project skills created and validated (2026-05-28):
 | Area | Files | Status |
 |---|---|---|
 | `active-context.md` | 1 | Current |
-| `sessions/` | 16 entries (14 milestone sessions + README/example; includes flow compliance audit, flow gap docs, language policy, and skills creation) | Complete for documented milestones |
+| `sessions/` | 17 entries (15 milestone sessions + README/example; includes flow compliance audit, flow gap docs, language policy, skills creation, and P0 milestone) | Complete for documented milestones |
 | `memories/decisions/` | 9 (auth JWT, Docker Compose, EF Core EnsureCreated, Next.js 16 proxy, localStorage auth, workflow enforcement, SQLite in-memory tests, Testing WebApplicationFactory, English-only artifacts) | Covers all key decisions |
 | `memories/bugs/` | 10 (proxy vs localStorage, ContactMonitor, DI inconsistency, parallel test race, JSON camelCase, JsonElement IConvertible, missing jti, telemetry auth cleared, E2E bootstrap/auth header, Godot telemetry JSON contract) | Documents all review + test findings |
 | `memories/learnings/` | 5 (Tailwind v4, Next.js 16 changes, Godot 4 C#, xUnit + WebApplicationFactory, opencode skill restart requirement) | Captures framework-specific lessons |
@@ -206,7 +207,7 @@ Five project skills created and validated (2026-05-28):
 
 ## Current Focus
 
-Backend integration tests (50/50), Godot tests (12/12), and frontend tests (23/23) pass. Flow audit, docs, and skills now define the requested target flow, gaps, and domain guidance. Five project skills created and validated. Next implementation work should start with P0: base scenario preset, Godot launch handoff, and Godot auth/token strategy. E2E smoke script is corrected and syntax-valid; still needs execution against live Docker Compose services. Restart opencode to load new skills.
+P0 milestone complete. All 85 tests pass (backend 50/50, frontend 23/23, Godot 12/12). Base scenario preset is enforced (backend validates, frontend dropdown selector). Godot launch handoff works end-to-end: Trainee starts session → launch command with `--session-id`, `--api-url`, `--token` → copy/download mechanism. Godot BackendClient already parses these arguments. Known gaps: scenario-presets endpoint still needs an integration test; frontend page components lack tests (pre-existing); pre-existing TypeScript errors in test-only files do not affect build or tests. Next work should proceed with P1: critical events and basic final report, or E2E smoke test execution against live Docker Compose. Restart opencode to load new skills before P1 work.
 
 ## Open Tasks
 
@@ -222,11 +223,13 @@ Backend integration tests (50/50), Godot tests (12/12), and frontend tests (23/2
 - [x] Godot simulation unit tests (BackendClient + data structures) — 12/12 passing
 - [x] Audit requested Admin → Evaluator → Evaluated flow compliance
 - [x] Document target evaluation flows, gap plan, and agent/skill readiness in `docs/`
-- [ ] Frontend page component tests (admin, instructor, trainee pages)
+- [ ] Frontend page component tests (admin, instructor, trainee pages) — known gap
 - [ ] Run E2E smoke test against live Docker Compose API
-- [ ] Add basic scenario preset contract/list endpoint/UI selection and map it to Godot base scene/config
-- [ ] Implement trainee-to-Godot launch handoff with `sessionId`, API URL, and authorization strategy
+- [x] Add basic scenario preset contract/list endpoint/UI selection and map it to Godot base scene/config
+- [x] Implement trainee-to-Godot launch handoff with `sessionId`, API URL, and authorization strategy
+- [ ] Add integration test for `GET /api/instructor/scenario-presets` endpoint (QA gap)
 - [ ] Add critical-event/report model and evaluator-facing report summary from telemetry
 - [ ] Refactor telemetry/session/evaluation changes behind service/store boundaries before expanding reporting
 - [x] Create five project skills (.opencode/skills/) — simulation-domain, godot-telemetry-hal, backend-telemetry-reporting, nextjs-role-ui, qa-e2e-simulation
+- [ ] Fix pre-existing TypeScript errors in test-only files (4 errors in `api.test.ts`)
 - [ ] Restart opencode to load new skills before starting P1 work

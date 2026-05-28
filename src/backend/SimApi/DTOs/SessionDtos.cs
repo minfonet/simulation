@@ -18,6 +18,14 @@ public class EvaluateSessionRequest
     public string? Comments { get; set; }
 }
 
+public class ScenarioPresetResponse
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string GodotScenePath { get; set; } = string.Empty;
+}
+
 public class SessionResponse
 {
     public Guid Id { get; set; }

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 interface Session {
   id: string
@@ -26,17 +27,15 @@ const statusColor: Record<string, "default" | "success" | "warning" | "secondary
 }
 
 export default function TraineeSessions() {
+  const router = useRouter()
   const [sessions, setSessions] = useState<Session[]>([])
 
   useEffect(() => {
     api.get<Session[]>("/api/trainee/sessions").then(setSessions)
   }, [])
 
-  async function startSession(id: string) {
-    await api.post(`/api/trainee/sessions/${id}/start`, {})
-    setSessions((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: "Active" } : s)),
-    )
+  function startSession(id: string) {
+    router.push(`/trainee/sessions/${id}`)
   }
 
   return (

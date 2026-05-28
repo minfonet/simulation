@@ -21,12 +21,12 @@ public class InstructorControllerTests : IntegrationTestBase
         var response = await Client.PostAsJsonAsync("/api/instructor/sessions", new CreateSessionRequest
         {
             TraineeId = traineeAuth.UserId,
-            Scenario = "city-driving"
+            Scenario = "default"
         });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var session = await DeserializeAsync<SessionResponse>(response);
-        Assert.Equal("city-driving", session.Scenario);
+        Assert.Equal("default", session.Scenario);
         Assert.Equal("Pending", session.Status);
         Assert.Equal(traineeAuth.UserId, session.TraineeId);
     }
@@ -40,7 +40,7 @@ public class InstructorControllerTests : IntegrationTestBase
         await Client.PostAsJsonAsync("/api/instructor/sessions", new CreateSessionRequest
         {
             TraineeId = traineeAuth.UserId,
-            Scenario = "highway"
+            Scenario = "default"
         });
 
         var response = await Client.GetAsync("/api/instructor/sessions");
@@ -59,7 +59,7 @@ public class InstructorControllerTests : IntegrationTestBase
         var createResponse = await Client.PostAsJsonAsync("/api/instructor/sessions", new CreateSessionRequest
         {
             TraineeId = traineeAuth.UserId,
-            Scenario = "night-driving"
+            Scenario = "default"
         });
         var created = await DeserializeAsync<SessionResponse>(createResponse);
 
@@ -79,7 +79,7 @@ public class InstructorControllerTests : IntegrationTestBase
         var createResponse = await Client.PostAsJsonAsync("/api/instructor/sessions", new CreateSessionRequest
         {
             TraineeId = traineeAuth.UserId,
-            Scenario = "eval-test"
+            Scenario = "default"
         });
         var session = await DeserializeAsync<SessionResponse>(createResponse);
 
@@ -121,7 +121,7 @@ public class InstructorControllerTests : IntegrationTestBase
         var createResp = await Client.PostAsJsonAsync("/api/instructor/sessions", new CreateSessionRequest
         {
             TraineeId = traineeAuth.UserId,
-            Scenario = "eval-list"
+            Scenario = "default"
         });
         var session = await DeserializeAsync<SessionResponse>(createResp);
 
@@ -151,7 +151,7 @@ public class InstructorControllerTests : IntegrationTestBase
         var createResp = await Client.PostAsJsonAsync("/api/instructor/sessions", new CreateSessionRequest
         {
             TraineeId = traineeAuth.UserId,
-            Scenario = "no-eval-pending"
+            Scenario = "default"
         });
         var session = await DeserializeAsync<SessionResponse>(createResp);
 

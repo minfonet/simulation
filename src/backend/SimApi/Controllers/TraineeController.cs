@@ -14,10 +14,12 @@ namespace SimApi.Controllers;
 public class TraineeController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly IConfiguration _configuration;
 
-    public TraineeController(AppDbContext db)
+    public TraineeController(AppDbContext db, IConfiguration configuration)
     {
         _db = db;
+        _configuration = configuration;
     }
 
     private Guid GetUserId() =>
@@ -87,7 +89,8 @@ public class TraineeController : ControllerBase
         session.Status = SessionStatus.Active;
         await _db.SaveChangesAsync();
 
-        return Ok(new { session.Id, Status = session.Status.ToString() });
+        var apiUrl = _configuration.GetValue<string>("PublicApiUrl") ?? "http://localhost:8080";
+        return Ok(new { session.Id, Status = session.Status.ToString(), ApiUrl = apiUrl });
     }
 
     [HttpPost("sessions/{id}/finish")]

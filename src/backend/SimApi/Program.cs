@@ -38,6 +38,7 @@ if (!builder.Environment.IsEnvironment("Testing"))
 
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddSingleton<ScenarioPresetStore>();
 
 builder.Services.AddCors(options =>
 {

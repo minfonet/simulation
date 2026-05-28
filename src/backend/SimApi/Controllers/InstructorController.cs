@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SimApi.Data;
 using SimApi.DTOs;
 using SimApi.Models;
+using SimApi.Services;
 
 namespace SimApi.Controllers;
 
@@ -14,10 +15,12 @@ namespace SimApi.Controllers;
 public class InstructorController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly ScenarioPresetStore _presetStore;
 
-    public InstructorController(AppDbContext db)
+    public InstructorController(AppDbContext db, ScenarioPresetStore presetStore)
     {
         _db = db;
+        _presetStore = presetStore;
     }
 
     private Guid GetUserId() =>
@@ -52,9 +55,29 @@ public class InstructorController : ControllerBase
         return Ok(sessions);
     }
 
+    [HttpGet("scenario-presets")]
+    public ActionResult<List<ScenarioPresetResponse>> GetScenarioPresets()
+    {
+        var presets = _presetStore.GetAll().Select(p => new ScenarioPresetResponse
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Description = p.Description,
+            GodotScenePath = p.GodotScenePath
+        }).ToList();
+
+        return Ok(presets);
+    }
+
     [HttpPost("sessions")]
     public async Task<ActionResult<SessionResponse>> CreateSession(CreateSessionRequest request)
     {
+        if (!_presetStore.IsValid(request.Scenario))
+        {
+            var validPresets = string.Join(", ", _presetStore.GetAll().Select(p => p.Id));
+            return BadRequest($"Invalid scenario preset. Valid presets: {validPresets}");
+        }
+
         var trainee = await _db.Users
             .FirstOrDefaultAsync(u => u.Id == request.TraineeId && u.Role == UserRole.Trainee);
 

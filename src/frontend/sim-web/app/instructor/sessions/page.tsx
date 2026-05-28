@@ -5,7 +5,6 @@ import { api } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
 import { Navbar } from "@/components/layout/navbar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -14,6 +13,13 @@ import Link from "next/link"
 interface TraineeOption {
   id: string
   name: string
+}
+
+interface ScenarioPreset {
+  id: string
+  name: string
+  description: string
+  godotScenePath: string
 }
 
 interface Session {
@@ -39,10 +45,18 @@ export default function InstructorSessions() {
   const [trainees, setTrainees] = useState<TraineeOption[]>([])
   const [selectedTrainee, setSelectedTrainee] = useState("")
   const [scenario, setScenario] = useState("default")
+  const [presets, setPresets] = useState<ScenarioPreset[]>([])
+  const [presetsLoading, setPresetsLoading] = useState(true)
 
   useEffect(() => {
     api.get<Session[]>("/api/instructor/sessions").then(setSessions)
     api.get<TraineeOption[]>("/api/instructor/trainees").then(setTrainees)
+    api.get<ScenarioPreset[]>("/api/instructor/scenario-presets").then((data) => {
+      setPresets(data)
+      const defaultPreset = data.find((p) => p.id === "default")
+      if (defaultPreset) setScenario(defaultPreset.id)
+      setPresetsLoading(false)
+    }).catch(() => setPresetsLoading(false))
   }, [])
 
   async function createSession() {
@@ -69,12 +83,27 @@ export default function InstructorSessions() {
                   </option>
                 ))}
               </Select>
-              <Input
-                placeholder="Scenario"
-                value={scenario}
-                onChange={(e) => setScenario(e.target.value)}
-                className="max-w-[200px]"
-              />
+              <div className="flex flex-col gap-1 max-w-[200px]">
+                <Select value={scenario} onChange={(e) => setScenario(e.target.value)}>
+                  {presetsLoading ? (
+                    <option value="">Loading presets...</option>
+                  ) : presets.length === 0 ? (
+                    <option value="">No presets available</option>
+                  ) : (
+                    presets.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))
+                  )}
+                </Select>
+                {(() => {
+                  const selectedPreset = presets.find((p) => p.id === scenario)
+                  return selectedPreset?.description ? (
+                    <p className="text-xs text-zinc-500">{selectedPreset.description}</p>
+                  ) : null
+                })()}
+              </div>
               <Button onClick={createSession}>Create Session</Button>
             </div>
           </CardContent>

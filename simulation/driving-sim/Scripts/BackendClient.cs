@@ -42,9 +42,17 @@ public class BackendClient
         if (_sessionId == Guid.Empty) return;
         try
         {
-            var response = await Client.PostAsync(
-                $"{_baseUrl}/api/trainee/sessions/{_sessionId}/start",
-                new StringContent("{}", Encoding.UTF8, "application/json"));
+            var request = new HttpRequestMessage(
+                HttpMethod.Post, $"{_baseUrl}/api/trainee/sessions/{_sessionId}/start")
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            };
+
+            if (!string.IsNullOrEmpty(_token))
+                request.Headers.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _token);
+
+            var response = await Client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
                 GD.Print($"Session {_sessionId} started");
@@ -103,9 +111,17 @@ public class BackendClient
         if (_sessionId == Guid.Empty) return;
         try
         {
-            var response = await Client.PostAsync(
-                $"{_baseUrl}/api/trainee/sessions/{_sessionId}/finish",
-                new StringContent("{}", Encoding.UTF8, "application/json"));
+            var request = new HttpRequestMessage(
+                HttpMethod.Post, $"{_baseUrl}/api/trainee/sessions/{_sessionId}/finish")
+            {
+                Content = new StringContent("{}", Encoding.UTF8, "application/json"),
+            };
+
+            if (!string.IsNullOrEmpty(_token))
+                request.Headers.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _token);
+
+            var response = await Client.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
                 GD.Print($"Session {_sessionId} finished");
