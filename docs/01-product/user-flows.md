@@ -452,6 +452,8 @@ This section documents the requested target operating flow for the MVP and compa
 
 ## 9. In-Simulation Driving Experience (P2)
 
+**Status: ✅ ALL 5 MILESTONES COMPLETE (2026-05-29).** Cockpit interior, HUD, third-person drift camera, improved physics, and WorldEnvironment all delivered.
+
 This section describes the visual/physical experience **inside Godot** while the Trainee is driving. It is not a separate user flow but a qualitative enhancement to the driving step (step 5 in the E2E flow).
 
 ### 9.1 Current state (P0/P1)
@@ -483,7 +485,7 @@ The P2 driving experience must be implemented in this exact order:
 - Dashboard mesh visible in front of driver (placeholder for future gauges)
 - Driver seat mesh visible in peripheral view
 - Single collision shape covers the car exterior (unchanged from P0)
-- Third-person camera and toggle are NOT implemented yet (M3)
+- Third-person camera and toggle implemented (M3)
 
 **M2 — HUD:**
 - Speed label (top-right): "Speed: 45 km/h"
@@ -533,19 +535,19 @@ The P2 driving experience must be implemented in this exact order:
 - [x] All exterior meshes still present; telemetry/session unchanged
 
 **M2 — HUD:**
-- [ ] HUD shows speed (km/h), steering indicator, controls, and Finish button
-- [ ] Finish button ends the session via API and closes Godot
+- [x] HUD shows speed (km/h), steering indicator, controls, and Finish button
+- [x] Finish button ends the session via API and closes Godot
 
 **M3 — Third-person camera:**
-- [ ] Camera follows smoothly with no jitter and drifts/leans on slides
-- [ ] `C` key toggles between cockpit and third-person view
+- [x] Camera follows smoothly with no jitter and drifts/leans on slides
+- [x] `C` key toggles between cockpit and third-person view
 
 **M4 — Physics:**
-- [ ] Physics feels more arcade-like; drift is achievable and recoverable
-- [ ] All tunable values are exported properties
+- [x] Physics feels more arcade-like; drift is achievable and recoverable
+- [x] All tunable values are exported properties
 
 **M5 — Environment:**
-- [ ] WorldEnvironment with sky and fog present
+- [x] WorldEnvironment with sky and fog present
 
 **Global:**
 - [ ] All 120/120 existing tests still pass

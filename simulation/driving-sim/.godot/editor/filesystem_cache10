@@ -1,0 +1,11 @@
+63f7b34db8d8cdea90c76aacccf841ec
+::res://::1779920116
+export_presets.cfg::TextFile::-1::1779885058::0::1::::<><><>0<>0<><>::
+icon.svg::CompressedTexture2D::8369446024193095115::1779885060::1780056190::1::::<><><>0<>0<>f6700779296609c712d4fbda61debc19<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+::res://Scenes/::1779885121
+Main.tscn::PackedScene::-1::1780055972::0::1::::<><><>0<>0<><>::res://Scripts/VehicleController.cs<>res://Scripts/HudController.cs<>res://Scripts/FollowCamera.cs
+::res://Scripts/::1780054257
+BackendClient.cs::CSharpScript::5103241396849880468::1779966384::0::1::::<><><>0<>0<><>::
+FollowCamera.cs::CSharpScript::2917834192262417422::1780054513::0::1::::<>Node3D<><>0<>0<><>::
+HudController.cs::CSharpScript::1866196723296420988::1780053597::0::1::::<>CanvasLayer<><>0<>0<><>::
+VehicleController.cs::CSharpScript::2670759796775545387::1780055536::0::1::::<>RigidBody3D<><>0<>0<><>::

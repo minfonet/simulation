@@ -30,7 +30,7 @@ Document the minimum pending work needed to turn the current vertical slice into
 | P1 | Critical events | ✅ DELIVERED | Minimum critical event model/contract: `sessionId`, timestamp, type, severity, optional metadata; at least collision. | Collisions record a queryable critical event; duplicates/derivation are defined; events belong to the correct session. | Telemetry ingestion/storage/query boundaries (`ITelemetryIngestor`/`ITelemetryStore` or equivalents); no new controller-to-DB telemetry logic; contract tests. |
 | P1 | Basic final report | ✅ DELIVERED | Query/endpoint/UI for completed-session report with summary, critical events, and relevant telemetry. | Evaluator sees report before grading; report respects org/role ownership; evaluation saves score/comments; Trainee sees final result. | Reporting query service over telemetry/session/evaluation stores; controllers/pages thin; integration and UI tests. |
 | P1 | Missing flow tests | ⚠️ PARTIAL | Admin/Instructor/Trainee page tests, preset/launch/events/report contracts, and E2E smoke with live services. | CI/local reports passing tests or documents missing runtime; E2E covers create org → create preset session → launch/handoff stub or real → telemetry/events → report/evaluate. | QA must protect boundaries, not only happy path: auth, ownership, invalid state, invalid preset/token. |
-| P2 | Driving Experience (M1 cockpit interior, M2 HUD, M3 drift camera, M4 physics, M5 environment) | ✅ M1 COMPLETE (M2–M5 pending) | **M1**: Cockpit interior with driver's-eye camera, steering wheel mesh, dashboard, driver seat. **M2**: CanvasLayer HUD (speed, steering, controls, finish button). **M3**: Third-person drift camera with smooth follow, look-ahead, lean, toggleable with C key. **M4**: Improved arcade-style physics (lift-off oversteer, PID regulation, weight transfer, tunable exports). **M5**: WorldEnvironment with sky and fog. | M1: Cockpit camera is default POV; steering wheel visible and rotates; dashboard visible. M2: HUD shows speed, steering, controls, finish button. M3: Camera follows smoothly and drifts/leans; C toggles view. M4: Physics feels arcade-like; drift achievable; all tunables exported. M5: Sky + fog present. Global: 120/120 tests pass; telemetry/session unchanged. | Godot engine APIs stay in adapter/node scripts; camera/HUD logic extracted from BackendClient and VehicleController; no telemetry contract changes; no hardware/input changes; use `godot-driving-experience` skill. Cockpit is THE priority: implement before third-person camera. |
+| P2 | Driving Experience (M1 cockpit interior, M2 HUD, M3 drift camera, M4 physics, M5 environment) | ✅ **ALL 5 COMPLETE** | **M1**: Cockpit interior with driver's-eye camera, steering wheel mesh, dashboard, driver seat. **M2**: CanvasLayer HUD (speed, steering, controls, finish button). **M3**: Third-person drift camera with smooth follow, look-ahead, lean, toggleable with C key. **M4**: Improved arcade-style physics (lift-off oversteer, PID regulation, weight transfer, tunable exports). **M5**: WorldEnvironment with sky and fog. | M1: Cockpit camera is default POV; steering wheel visible and rotates; dashboard visible. M2: HUD shows speed, steering, controls, finish button. M3: Camera follows smoothly and drifts/leans; C toggles view. M4: Physics feels arcade-like; drift achievable; all tunables exported. M5: Sky + fog present. Global: 120/120 tests pass; telemetry/session unchanged. | Godot engine APIs stay in adapter/node scripts; camera/HUD logic extracted from BackendClient and VehicleController; no telemetry contract changes; no hardware/input changes; use `godot-driving-experience` skill. Cockpit is THE priority: implement before third-person camera. |
 | P2 | Incremental refactor of current boundaries | ❌ NOT STARTED | Extract services/stores when touching sessions, evaluation, and telemetry. | New capabilities do not increase logic in controllers/pages/Godot node scripts; existing debt does not get worse and follow-ups are documented. | Architecture guardrails; reviewer rejects new direct persistence/business logic in controllers for telemetry/reporting. |
 
 ### Legend
@@ -86,18 +86,18 @@ These are the open items required to execute all 5 flows end-to-end:
 | 5 | Frontend page component tests (~6 files) | 1–5 | Test gap | 1-2 sessions | ⬜ Pending |
 | 6 | Fix 4 pre-existing TypeScript compilation errors in `api.test.ts` | All | Build | 15 min | ⬜ Pending |
 | 7 | **Cockpit interior** (driver's-eye camera, steering wheel, dashboard, seat) | 6 (Driving Experience) | Visual | 1 session | ✅ Complete |
-| 8 | **CanvasLayer HUD** (speed, steering, controls, finish button) | 6 | HUD | 1 session | ❌ Not started |
-| 9 | **Third-person drift camera** (smooth follow, look-ahead, lean, C toggle) | 6 | Camera | 1 session | ❌ Not started |
-| 10 | **Improved physics feel** (lift-off oversteer, PID regulation, tunable exports) | 6 | Physics | 1 session | ❌ Not started |
-| 11 | **WorldEnvironment** (sky, fog, improved lighting) | 6 | Environment | 30 min | ❌ Not started |
+| 8 | **CanvasLayer HUD** (speed, steering, controls, finish button) | 6 | HUD | 1 session | ✅ Complete |
+| 9 | **Third-person drift camera** (smooth follow, look-ahead, lean, C toggle) | 6 | Camera | 1 session | ✅ Complete |
+| 10 | **Improved physics feel** (lift-off oversteer, PID regulation, tunable exports) | 6 | Physics | 1 session | ✅ Complete |
+| 11 | **WorldEnvironment** (sky, fog, improved lighting) | 6 | Environment | 30 min | ✅ Complete |
 
 ### Priority for next milestone
 
-1. Cockpit interior (item 7) — **FIRST: user wants Trainee inside the car**
-2. CanvasLayer HUD (item 8)
-3. Third-person drift camera (item 9)
-4. Improved physics feel (item 10)
-5. WorldEnvironment (item 11)
+1. Cockpit interior (item 7) — ✅ **DONE**
+2. CanvasLayer HUD (item 8) — ✅ **DONE**
+3. Third-person drift camera (item 9) — ✅ **DONE**
+4. Improved physics feel (item 10) — ✅ **DONE**
+5. WorldEnvironment (item 11) — ✅ **DONE**
 6. Integration test for scenario-presets endpoint (item 4)
 7. Frontend page component tests (item 5)
 8. Fix TypeScript errors in api.test.ts (item 6)
@@ -112,4 +112,4 @@ These are the open items required to execute all 5 flows end-to-end:
 
 ---
 
-> Last updated: 2026-05-28 | Milestones: P0 ✅ | P1 ✅
+> Last updated: 2026-05-29 | Milestones: P0 ✅ | P1 ✅ | P2 ✅ **ALL 5 COMPLETE**

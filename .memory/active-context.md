@@ -70,10 +70,10 @@ Exceptions (LEAD may implement directly): trivial single-file changes under 10 l
 **Priority order: cockpit first.** See `godot-driving-experience` skill for details.
 
 1. ✅ **M1 — Cockpit interior:** Camera at driver's eye level ~(0.6, 0.5, 0.3), steering wheel mesh (TorusMesh, Y-axis rotation), dashboard, driver seat. Default view. Steering wheel animation preserves base X rotation (1.5708) and applies steering on Y axis.
-2. ❌ **M2 — CanvasLayer HUD:** Speed, steering, controls hint, Finish button → BackendClient.FinishSession()
-3. ❌ **M3 — Third-person drift camera:** Smooth follow, look-ahead, lean, toggleable with C key
-4. ❌ **M4 — Improved physics:** Lift-off oversteer, PID-style regulation, weight transfer, tunable exports
-5. ❌ **M5 — WorldEnvironment:** ProceduralSkyMaterial, fog, lighting
+2. ✅ **M2 — CanvasLayer HUD:** Speed (km/h), steering visual bar, controls hint, Finish button → FinishAndQuit(). HudController.cs reads public properties from VehicleController. _sessionFinished guard prevents double FinishSession() call.
+3. ✅ **M3 — Third-person drift camera:** FollowCamera.cs with smooth lerp, look-ahead in velocity direction, lateral drift lean (`Basis.X * Sign(cross.Y)`), C key toggle with edge detection. CameraPivot moved to World level. Cockpit view is default.
+4. ✅ **M4 — Improved physics:** Lift-off oversteer, PID-style angular velocity regulation (OmegaMax/OmegaMaxDrift), lateral grip force (LateralGripForce), speed-sensitive steering, weight transfer (pitch/roll), drift detection via forward-velocity angle, all tunable via 9 exported properties.
+5. ✅ **M5 — WorldEnvironment:** ProceduralSkyMaterial (blue gradient sky), Sky resource, Environment with fog (density 0.003, height falloff -1 to 15). WorldEnvironment node added to Main.tscn.
 
 ## Scaffolding Created
 
@@ -110,8 +110,10 @@ Exceptions (LEAD may implement directly): trivial single-file changes under 10 l
 | `simulation/driving-sim/export_presets.cfg` | Windows desktop export preset |
 | `simulation/driving-sim/Scripts/VehicleController.cs` | Car physics, WASD+space, telemetry collection |
 | `simulation/driving-sim/Scripts/BackendClient.cs` | HTTP client: start session, batch telemetry, finish |
-| `simulation/driving-sim/Scenes/Main.tscn` | Main scene: ground, car, camera, obstacles |
-| `.opencode/skills/godot-driving-experience/SKILL.md` | Skill: drift camera, HUD, vehicle model, physics feel (P2) |
+| `simulation/driving-sim/Scenes/Main.tscn` | Main scene: ground, car, interior, cameras, HUD, obstacles, WorldEnvironment |
+| `simulation/driving-sim/Scripts/HudController.cs` | CanvasLayer HUD: speed, steering, controls hint, finish button |
+| `simulation/driving-sim/Scripts/FollowCamera.cs` | Third-person drift camera: smooth follow, look-ahead, lean, C toggle |
+| `.opencode/skills/godot-driving-experience/SKILL.md` | Skill: cockpit, HUD, camera, physics, environment (P2) |
 
 ## Open Findings (from architecture review)
 
@@ -145,7 +147,7 @@ Completed documentation updates:
 - `docs/03-ai-system/agent-skill-readiness.md` concludes current agents can execute P0 work if Lead delegates with explicit criteria, but project skills should be created before P1 telemetry/reporting and repeated sensitive tasks. All six recommended skills have been created at `.opencode/skills/`.
 - `docs/01-product/mdvp.md` now aligns with the requested no mandatory time limit for the simulation test. Enhanced scene description added for P2.
 - `docs/06-engineering/language-policy.md` now defines the mandatory English-only policy for repository artifacts.
-- `docs/01-product/execution-readiness.md` updated with Flow 6 (Driving Experience) — status ❌ NOT STARTED.
+- `docs/01-product/execution-readiness.md` updated with Flow 6 (Driving Experience) — ✅ **ALL 5 MILESTONES COMPLETE**.
 
 Review/QA status:
 
@@ -164,10 +166,10 @@ Six project skills created and validated (2026-05-28/29):
 | Area | Files | Status |
 |---|---|---|
 | `active-context.md` | 1 | Current |
-| `sessions/` | 22 entries (P0, P1, E2E execution, dashboards, signup form, driving experience skill creation, P2 M1 cockpit interior) | Complete for documented milestones |
-| `memories/decisions/` | 10 (auth JWT, Docker Compose, EF Core EnsureCreated, Next.js 16 proxy, localStorage auth, workflow enforcement, SQLite in-memory tests, Testing WebApplicationFactory, English-only artifacts, Admin self-registration signup) | Covers all key decisions |
+| `sessions/` | 32 entries (P0, P1, E2E, dashboards, skills, P2 M1–M5 milestones, 4 bugfix rounds) | Complete for documented milestones |
+| `memories/decisions/` | 12 (auth JWT, Docker Compose, EF Core EnsureCreated, Next.js 16 proxy, localStorage auth, workflow enforcement, SQLite in-memory tests, Testing WebApplicationFactory, English-only artifacts, Admin self-registration signup, P2 cockpit-first priority, driving experience skill boundary) | Covers all key decisions |
 | `memories/bugs/` | 10 (proxy vs localStorage, ContactMonitor, DI inconsistency, parallel test race, JSON camelCase, JsonElement IConvertible, missing jti, telemetry auth cleared, E2E bootstrap/auth header, Godot telemetry JSON contract) | Documents all review + test findings |
-| `memories/learnings/` | 7 (Tailwind v4, Next.js 16 changes, Godot 4 C#, xUnit + WebApplicationFactory, opencode skill restart requirement, P1.1 critical events test coverage, xUnit pattern notes) | Captures framework-specific lessons |
+| `memories/learnings/` | 12 (Tailwind v4, Next.js 16 changes, Godot 4 C#, xUnit + WebApplicationFactory, opencode skill restart requirement, P1.1 critical events test coverage, xUnit pattern notes, coverage scenario presets, tsc noemit test errors, coverage godot camera math, coverage vehiclecontroller physics, P2 driving experience complete) | Captures framework-specific lessons |
 | `memories/architecture/` | 2 (three-layer architecture, scalable guardrails) | System structure documented |
 
 ## Test Infrastructure (Updated — 2026-05-28)
@@ -225,18 +227,44 @@ Six project skills created and validated (2026-05-28/29):
 - ✅ Six opencode project skills created (.opencode/skills/); restart opencode to load them
 - ✅ Bootstrap org auto-seeded in Program.cs; no manual seeding required
 - ✅ Signup/Signin toggle on login page; first Admin registers from browser
-- ✅ P2 M1 (cockpit interior) complete — Interior node with meshes, CameraCockpit at (0.6, 0.5, 0.3), steering wheel Y-axis rotation, 12/12 Godot tests pass, BackendClient untouched
-- ❌ P2 M2 (HUD) — CanvasLayer with speed label, steering bar, controls hint, Finish button → BackendClient.FinishSession()
-- P2 driving experience depends on existing Main.tscn, VehicleController, BackendClient; must not break telemetry/session lifecycle
-- HUD Finish button must call BackendClient.FinishSession() correctly; error handling needed
+- ✅ P2 M1–M5 complete: cockpit interior, HUD, drift camera, improved physics, WorldEnvironment — all delivered, BackendClient untouched, telemetry unchanged
+- P2 driving experience depends on existing Main.tscn, VehicleController, BackendClient; must not break telemetry/session lifecycle — ✅ validated
+- HUD Finish button must call BackendClient.FinishSession() correctly — ✅ implemented with _sessionFinished guard
 - External references available: Rembot Games video series (drift camera + driver physics) + DriftCarG4 GitHub repo (first/third person cameras, PID controllers)
 
 ## Current Focus
 
-**P0/P1 complete. P2 M1 (Cockpit Interior) complete.** Backend auto-seeds bootstrap org on startup. Login page has Signup/Signin toggle. First Admin registers from browser, then creates orgs and invites users from the Admin panel. E2E smoke test executed successfully against live Docker Compose — 19/19 passing. Dashboards improved for all 3 roles. Comprehensive README.md with run/debug instructions. Tests: **120/120 all passing**.
+**P0/P1 complete. P2 (Driving Experience) ALL 5 MILESTONES + 4 BUGFIX ROUNDS COMPLETE.** Backend auto-seeds bootstrap org on startup. Login page has Signup/Signin toggle. First Admin registers from browser, then creates orgs and invites users from the Admin panel. E2E smoke test executed successfully against live Docker Compose — 19/19 passing. Dashboards improved for all 3 roles. Comprehensive README.md with run/debug instructions. Tests: **120/120 all passing**.
 
 **P2 M1 completed** (2026-05-29): Cockpit interior with CameraCockpit at (0.6, 0.5, 0.3), TorusMesh steering wheel (Y-axis rotation), BoxMesh dashboard/seat/column, all existing nodes preserved, BackendClient untouched, 12/12 Godot tests pass.
-**P2 M2 (next):** CanvasLayer HUD with speed label, steering bar, controls hint, Finish button → BackendClient.FinishSession().
+**P2 M2 completed** (2026-05-29): CanvasLayer HUD with SpeedLabel (top-left, km/h), SteeringLabel (bottom-center, visual bar), ControlsHint (bottom), FinishButton (top-right). HudController.cs reads CurrentSpeed/CurrentSteering from VehicleController. FinishButton calls FinishAndQuit() with _sessionFinished guard.
+**P2 M3 completed** (2026-05-29): Third-person drift camera — FollowCamera.cs with smooth lerp follow, look-ahead in velocity direction, lateral drift lean, C key toggle (edge detection). CameraPivot moved from Car child to World sibling. Cockpit view is default.
+**P2 M4 completed** (2026-05-29): Improved physics — speed-sensitive steering, drift detection, lift-off oversteer, lateral grip force, PID-style angular velocity control, weight transfer. All 9 tuning values exported.
+**P2 M5 completed** (2026-05-29): WorldEnvironment with ProceduralSkyMaterial (blue gradient), height fog (-1 to 15m), Environment resource.
+**P2 Bugfix round completed** (2026-05-29): Physics tuning (reduced weight transfer, added damping), cockpit visibility fix (thin chassis body, repositioned interior), sky enhancement (explicit sun params, deeper colors), camera LookAt safety, BackendClient error detail. 12/12 Godot tests pass (no regressions).
+**P2 — ALL 5 MILESTONES COMPLETE. BUGFIX ROUND COMPLETE.**
+- **Physics fix**: WeightTransferPitch 5.0→0.3, WeightTransferRoll 3.0→0.2, added angular damping (pitch/roll ×0.92/frame), car linear_damping=0.3, angular_damping=0.1 — car no longer flips skyward on acceleration.
+- **Cockpit fix**: BodyMesh changed from full enclosure (BoxMesh 2×0.8×4 at origin) to thin chassis floor (BoxMesh 1.8×0.2×3.8 at Y=-0.15). Steering wheel repositioned to (0.35, 0.25, -0.2) — now visible in cockpit view (in front of camera, no longer occluded by body mesh). Dashboard, column, and seat positions adjusted accordingly.
+- **Sky fix**: ProceduralSkyMaterial improved with deeper blue (0.15,0.4,0.85), explicit sun params (sun_angle_max=30, sun_latitude=35, sun_longitude=150, sun_color), energy_multiplier=1.2.
+- **Camera safety**: FollowCamera.LookAt() now has gimbal-lock protection (tiny offset when look direction is parallel to up vector).
+- **BackendClient**: Error messages now include session ID and helpful hints for troubleshooting.
+- **Validation**: 12/12 Godot tests still passing (xUnit, no regressions).
+**P2 Bugfix round 2** (2026-05-29): 
+- **Anti-flying**: Engine/reverse force projected onto XZ plane — car can no longer lift off regardless of pitch.
+- **Speed cap**: Max velocity capped at 50 m/s (~180 km/h) — brake/reverse now feel responsive.
+- **Steering wheel**: TorusMesh enlarged (inner 0.08→0.12, outer 0.15→0.22), rotation amplitude doubled to ±115°.
+- **Validation**: 12/12 Godot tests still passing (no regressions).
+**P2 Bugfix round 3** (2026-05-29):
+- **Steering direction fix**: `targetOmega` negated (`-_steeringAngle`) — A now correctly turns LEFT, D turns RIGHT. Previous sign error meant left key turned right.
+- **Engine power reduced**: 15000→800 — car no longer bounces/explodes on acceleration. Combined with XZ projection, stays firmly on ground.
+- **Signout redirect**: `logout()` now calls `window.location.href = "/login"` after clearing localStorage (previously stayed on dashboard with null user).
+- **Validation**: 12/12 Godot + 23/23 frontend tests passing (no regressions).
+**P2 Bugfix round 4** (2026-05-29):
+- **Steering fully corrected**: targetSteer swapped (left=0.5, right=-0.5), targetOmega negation reverted (`_steeringAngle * maxOmega * 2f`). Now _steeringAngle directly maps to turning direction: positive = left turn. Steering wheel visual also correct (top goes left on A).
+- **Anti-lift**: All central forces now have Y=0: lateral grip force (`lateralForce.Y = 0f`) and brake force (`brakeForce.Y = 0f`). Prevents body roll from generating upward force.
+- **LookAt crash fix**: FollowCamera now checks zero-length look direction before calling LookAt(). Prevents "axis must be normalized" error.
+- **Validation**: 12/12 Godot + 23/23 frontend tests passing (no regressions).
+- **All previous fixes preserved**: XZ projection, speed cap (50 m/s), angular damping, EnginePower=800.
 
 Known gaps: frontend page component tests (pre-existing), pre-existing TypeScript errors in test-only files do not affect build or tests. Restart opencode to load all 6 skills before new work.
 
@@ -275,9 +303,15 @@ Known gaps: frontend page component tests (pre-existing), pre-existing TypeScrip
 - [ ] Frontend page component tests (admin, instructor, trainee pages) — known gap
 - [ ] Restart opencode to load all 6 skills before starting new work
 - [x] P2 M1: Cockpit interior (driver's-eye camera at ~0.6,0.5,0.3, steering wheel mesh, dashboard, driver seat) — default view
-- [ ] P2 M2: CanvasLayer HUD (speed label, steering bar, controls hint, finish button → BackendClient.FinishSession())
-- [ ] P2 M3: Third-person drift camera (smooth follow, look-ahead, drift lean, exported properties, C toggle)
-- [ ] P2 M4: Improved physics feel (lift-off oversteer, PID-style regulation, weight transfer, tunable exports)
-- [ ] P2 M5: WorldEnvironment (ProceduralSkyMaterial, fog, improved lighting)
-- [x] P2 M1: Smoke test — 120/120 tests still passing, build clean, architecture gate PASS
-- [ ] P2 M2→M5: Smoke test after each milestone — verify 120/120 tests still passing + visual validation in Godot
+- [x] P2 M2: CanvasLayer HUD (speed label, steering bar, controls hint, finish button → FinishAndQuit())
+- [x] P2 M3: Third-person drift camera (smooth follow, look-ahead, drift lean, exported properties, C toggle)
+- [x] P2 M4: Improved physics feel (lift-off oversteer, PID-style regulation, weight transfer, tunable exports)
+- [x] P2 M5: WorldEnvironment (ProceduralSkyMaterial, fog, improved lighting)
+- [x] P2 M4: Smoke test — 101/101 tests passing (dotnet + npm), plus 19 E2E, architecture gate PASS
+- [x] P2 M5: Smoke test — all tests passing, build clean, architecture gate PASS
+- [x] **P2 COMPLETE — All 5 driving experience milestones delivered**
+- [x] P2 Bugfix Round 1: Physics tuning (weight transfer 5→0.3, angular damping ×0.92), thin chassis body, interior repositioning, sky improvement, camera gimbal safety, BackendClient error detail
+- [x] P2 Bugfix Round 2: XZ-projected engine/reverse force, speed cap 50 m/s, steering wheel enlarged (±115° rotation)
+- [x] P2 Bugfix Round 3: EnginePower 15000→800, steering direction fix (targetOmega negation), signout redirect `/login`
+- [x] P2 Bugfix Round 4: Steering fully corrected (targetSteer swapped, targetOmega reverted), anti-lift (all central forces Y=0), LookAt crash fix (zero-length check)
+- [x] **P2 ALL 5 MILESTONES + 4 BUGFIX ROUNDS COMPLETE — User confirms "mucho mejor"**

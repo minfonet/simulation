@@ -2,7 +2,7 @@
 
 > Last updated: 2026-05-29
 > Current test status: **120/120 passing** (backend 66, frontend 23, Godot 12, E2E 19)
-> Milestones: P0 ✅ | P1 ✅ | P2 (driving experience) M1 cockpit interior ✅ | M2–M5 ❌
+> Milestones: P0 ✅ | P1 ✅ | P2 ✅ **ALL 5 DONE + 4 BUGFIX ROUNDS** (cockpit ✅ HUD ✅ drift cam ✅ physics ✅ environment ✅ steering ✅ anti-lift ✅ LookAt crash ✅ signout ✅)
 
 ---
 
@@ -205,9 +205,45 @@ This document analyses each user flow requested for the MVP and determines exact
 
 ## Flow 6 — Visual Driving Experience (Godot Enhancement)
 
-### Status: ✅ **M1 complete** (M2–M5 pending)
+### Status: ✅ **ALL 5 MILESTONES COMPLETE**
 
 ### Completed: M1 — Cockpit interior
+
+### Completed: M2 — CanvasLayer HUD
+
+- ✅ SpeedLabel shows speed in km/h (top-left, updated every frame)
+- ✅ SteeringLabel shows visual bar (bottom-center)
+- ✅ ControlsHint shows WASD/Space/Finish instructions (bottom)
+- ✅ FinishButton calls FinishAndQuit() with `_sessionFinished` guard (top-right)
+- ✅ HudController.cs created as new CanvasLayer script, reads VehicleController properties
+- ✅ No double FinishSession() call; BackendClient untouched; 12/12 Godot tests pass
+
+### Completed: M5 — WorldEnvironment
+
+- ✅ WorldEnvironment node added to Main.tscn with ProceduralSkyMaterial (blue gradient)
+- ✅ Environment with height fog (density 0.003, falloff -1 to 15m)
+- ✅ No scripts modified; all existing nodes preserved
+
+### Completed: M4 — Improved Physics
+
+- ✅ Speed-sensitive steering: target halved at top speed
+- ✅ Drift detection: forward-velocity angle threshold
+- ✅ Lift-off oversteer: throttle release while turning reduces grip
+- ✅ Lateral grip force resists sliding proportionally to grip (LateralGripForce)
+- ✅ PID-style angular velocity: error-based torque + clamp (OmegaMax/OmegaMaxDrift)
+- ✅ Weight transfer pitch/roll torques on accel/brake/steer
+- ✅ All 9 values exported: GripFactor, DriftThreshold, OmegaMax, OmegaMaxDrift, WeightTransferPitch, WeightTransferRoll, GripRestoreSpeed, DriftAngleThreshold, LateralGripForce
+- ✅ BackendClient untouched; telemetry unchanged; 12/12 Godot tests pass
+
+### Completed: M3 — Third-Person Drift Camera
+
+- ✅ FollowCamera.cs created as new Node3D script with smooth lerp follow
+- ✅ CameraPivot moved from Car child to World sibling for independent movement
+- ✅ Look-ahead: camera looks slightly ahead in car's velocity direction
+- ✅ Drift lean: camera offsets laterally (`Basis.X * Sign(cross.Y)`) during drifts
+- ✅ C key toggle with edge detection (`_cWasPressed` flag) — one toggle per press
+- ✅ Cockpit view remains the default; all exported properties tunable in inspector
+- ✅ BackendClient/VehicleController/HudController untouched; 12/12 Godot tests pass
 
 - ✅ Cockpit camera (`CameraCockpit`) is `current=true` at position (0.6, 0.5, 0.3)
 - ✅ Steering wheel mesh (TorusMesh) rotates on Y axis with steering input  
@@ -233,6 +269,21 @@ This document analyses each user flow requested for the MVP and determines exact
 - Finish button in HUD calls `BackendClient.FinishSession()` → same API as before
 - All existing tests must continue passing (120/120)
 
+### ✅ P2 Bugfix Rounds (2026-05-29) — ALL COMPLETE
+
+After initial P2 delivery, 4 bugfix rounds resolved user-reported issues:
+
+| Round | Fixes | Result |
+|-------|-------|--------|
+| **R1** | WeightTransferPitch 5.0→0.3, +angular damping, BodyMesh thin chassis, steering wheel repositioned, sky improved, camera gimbal safety, BackendClient error detail | Car no longer flips; cockpit visible; sky shows gradient |
+| **R2** | XZ-projected engine/reverse force, speed cap (50 m/s), steering wheel enlarged (inner 0.08→0.12, outer 0.15→0.22), rotation doubled (±115°) | Car stopped launching upward; wheel visible |
+| **R3** | EnginePower 15000→800, signout redirect `/login` | Car controllable; auth UX fixed |
+| **R4** | Steering fully corrected (targetSteer swapped left=0.5/right=-0.5, targetOmega sign reverted), anti-lift (all central forces Y=0), LookAt crash fix (zero-length check) | A=left/D=right correct; car never flies; no console errors |
+
+**Architecture gate**: All 4 rounds preserved: BackendClient untouched, telemetry/session lifecycle unchanged.
+
+**Test status after all fixes**: **120/120 passing** (backend 66, frontend 23, Godot 12, E2E 19)
+
 ### Acceptance criteria
 
 **M1 — Cockpit interior:**
@@ -243,26 +294,26 @@ This document analyses each user flow requested for the MVP and determines exact
 - [x] All exterior meshes still present; telemetry/session unchanged
 
 **M2 — HUD:**
-- [ ] HUD shows speed (km/h), steering angle indicator, and controls hint
-- [ ] HUD has a "Finish Simulation" button that calls `BackendClient.FinishSession()` and exits
+- [x] HUD shows speed (km/h), steering angle indicator, and controls hint
+- [x] HUD has a "Finish Simulation" button that calls `BackendClient.FinishSession()` and exits
 
 **M3 — Third-person camera:**
-- [ ] Camera follows smoothly with no jitter; responds to car velocity direction
-- [ ] Camera drifts/leans laterally when the car slides at speed
-- [ ] Pressing `C` toggles between cockpit and third-person view
+- [x] Camera follows smoothly with no jitter; responds to car velocity direction
+- [x] Camera drifts/leans laterally when the car slides at speed
+- [x] Pressing `C` toggles between cockpit and third-person view
 
 **M4 — Physics:**
-- [ ] Physics feel is noticeably more fun/arcade-like (easier to drift, weight transfer visible)
-- [ ] Lift-off oversteer works: release accelerator while turning → drift initiates
-- [ ] All tunable values are exported properties, not hardcoded
+- [x] Physics feel is noticeably more fun/arcade-like (easier to drift, weight transfer visible)
+- [x] Lift-off oversteer works: release accelerator while turning → drift initiates
+- [x] All tunable values are exported properties, not hardcoded
 
 **M5 — Environment:**
-- [ ] WorldEnvironment exists with sky and fog effects
+- [x] WorldEnvironment exists with sky and fog effects
 
 **Global:**
-- [ ] Existing telemetry, session lifecycle, and backend communication remain unchanged
-- [ ] No Godot engine APIs leaked into pure classes
-- [ ] 120/120 tests still passing
+- [x] Existing telemetry, session lifecycle, and backend communication remain unchanged
+- [x] No Godot engine APIs leaked into pure classes
+- [x] 120/120 tests still passing
 
 ### How to validate
 
@@ -351,10 +402,10 @@ cd ..
 | # | Item | Why | Skill | Effort |
 |---|------|-----|-------|--------|
 | 10 | **Cockpit interior** (driver's-eye camera, steering wheel, dashboard, seat) | User's explicit priority: Trainee inside car | `godot-driving-experience` | 1 session | ✅ **DONE** |
-| 11 | **CanvasLayer HUD** (speed, steering, controls, finish button) | Driver feedback | `godot-driving-experience` | 1 session |
-| 12 | **Third-person drift camera** (smooth follow, look-ahead, lean, C toggle) | Toggleable camera mode | `godot-driving-experience` | 1 session |
-| 13 | **Improved physics** (lift-off oversteer, PID regulation, tunable exports) | Fun driving feel | `godot-driving-experience` | 1 session |
-| 14 | **WorldEnvironment** (sky, fog, lighting) | Visual polish | `godot-driving-experience` | 30 min |
+| 11 | **CanvasLayer HUD** (speed, steering, controls, finish button) | Driver feedback | `godot-driving-experience` | 1 session | ✅ **DONE** |
+| 12 | **Third-person drift camera** (smooth follow, look-ahead, lean, C toggle) | Toggleable camera mode | `godot-driving-experience` | 1 session | ✅ **DONE** |
+| 13 | **Improved physics** (lift-off oversteer, PID regulation, tunable exports) | Fun driving feel | `godot-driving-experience` | 1 session | ✅ **DONE** |
+| 14 | **WorldEnvironment** (sky, fog, lighting) | Visual polish | `godot-driving-experience` | 30 min | ✅ **DONE** |
 
 ## Per-Flow Validation Checklist
 

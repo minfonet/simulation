@@ -57,7 +57,7 @@ public class BackendClient
             if (response.IsSuccessStatusCode)
                 GD.Print($"Session {_sessionId} started");
             else
-                GD.PrintErr($"Failed to start session: {response.StatusCode}");
+                GD.PrintErr($"Failed to start session {_sessionId}: {response.StatusCode}. Is the backend running and the session in Pending status?");
         }
         catch (Exception e)
         {
@@ -98,7 +98,7 @@ public class BackendClient
             var response = await Client.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
-                GD.PrintErr($"Telemetry send failed: {response.StatusCode}");
+                GD.PrintErr($"Telemetry send failed for session {_sessionId}: {response.StatusCode}. Is the backend running?");
         }
         catch (Exception e)
         {
@@ -126,7 +126,7 @@ public class BackendClient
             if (response.IsSuccessStatusCode)
                 GD.Print($"Session {_sessionId} finished");
             else
-                GD.PrintErr($"Failed to finish session: {response.StatusCode}");
+                GD.PrintErr($"Failed to finish session {_sessionId}: {response.StatusCode}. Is the backend running and the session in a startable state?");
         }
         catch (Exception e)
         {

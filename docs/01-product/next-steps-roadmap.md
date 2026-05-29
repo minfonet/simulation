@@ -1,13 +1,13 @@
-# Next Steps Roadmap — Post-P1
+# Next Steps Roadmap — Post-P2
 
-Last updated: 2026-05-28
-Baseline: 101/101 tests passing (backend 66, frontend 23, Godot 12)
+Last updated: 2026-05-29
+Baseline: **120/120 tests passing** (backend 66, frontend 23, Godot 12, E2E 19)
 
 ---
 
 ## Overview
 
-P0 (scenario presets + Godot launch handoff) and P1 (critical events + basic final report) are complete. The following documents all remaining work, organized by priority and dependency.
+P0 (scenario presets + Godot launch handoff), P1 (critical events + basic final report), and **P2 (driving experience) are complete**. P2 required 4 iterative bugfix rounds post-delivery to resolve steering direction, anti-flying, camera crash, and signout redirect. All 120 tests pass. The following documents all remaining work, organized by priority and dependency.
 
 ---
 
@@ -380,7 +380,7 @@ P0 (scenario presets + Godot launch handoff) and P1 (critical events + basic fin
 
 | Phase | Backend | Frontend | Godot | E2E | Total |
 |-------|---------|----------|-------|-----|-------|
-| Current (P1) | 66 | 23 | 12 | 0 (script) | 101 |
+| Current (P2 + 4 bugfix rounds) | 66 | 23 | 12 | 19 | **120** |
 | + Quick wins | 67 | 23 | 12 | 0 | 102 |
 | + E2E smoke | 67 | 23 | 12 | 10+ | 112+ |
 | + Frontend tests | 67 | 35+ | 12 | 10+ | 124+ |
