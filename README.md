@@ -214,17 +214,29 @@ Godot 4.6.3 mono is required. Verify installation:
 3. Navigate to `/trainee/sessions`
 4. Click **"Start"** on a session → session becomes `Active`
 5. A **Launch Card** appears with:
-   - CLI command: `godot --session-id {id} --api-url {url} --token {token}`
+   - CLI command (includes `--path` to the project)
    - **"Copy Command"** button
    - **"Download Launch Script"** button (.ps1)
-6. Copy the command and run it in a terminal:
+6. Copy the command and run it **from the repository root**:
 
 ```powershell
+# Option A: Run from repo root (recommended)
+cd C:\Projects\ia\simulation
+godot --path "simulation/driving-sim" --session-id "00000000-0000-0000-0000-000000000001" --api-url "http://localhost:8080" --token "eyJhbGciOiJIUzI1NiIs..."
+
+# Option B: Run from project directory (omit --path)
+cd C:\Projects\ia\simulation\simulation\driving-sim
+godot --session-id "00000000-0000-0000-0000-000000000001" --api-url "http://localhost:8080" --token "eyJhbGciOiJIUzI1NiIs..."
+
+# Option C: Full path to Godot executable
 & "C:\Projects\ia\core\Godot_v4.6.3-stable_mono_win64\Godot_v4.6.3-stable_mono_win64.exe" `
+  --path "C:\Projects\ia\simulation\simulation\driving-sim" `
   --session-id "00000000-0000-0000-0000-000000000001" `
   --api-url "http://localhost:8080" `
   --token "eyJhbGciOiJIUzI1NiIs..."
 ```
+
+> **Important:** Godot needs to know which project to load. Always include `--path <project-dir>` or run the command from inside the `simulation/driving-sim/` directory. Without `--path`, Godot opens the editor instead of running the simulation.
 
 ### Controls inside Godot
 

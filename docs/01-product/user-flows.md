@@ -450,6 +450,109 @@ This section documents the requested target operating flow for the MVP and compa
 
 ---
 
+## 9. In-Simulation Driving Experience (P2)
+
+This section describes the visual/physical experience **inside Godot** while the Trainee is driving. It is not a separate user flow but a qualitative enhancement to the driving step (step 5 in the E2E flow).
+
+### 9.1 Current state (P0/P1)
+
+- Car is a single red box (MeshInstance3D with red material)
+- Camera is fixed behind the car with basic follow
+- No HUD (speed, steering, or controls display)
+- Ground is a dark green plane with a few colored obstacle boxes
+- Physics: basic RigidBody3D with forward force + steering torque
+
+### 9.2 P2 milestone priority order
+
+The P2 driving experience must be implemented in this exact order:
+
+| Order | Milestone | Rationale |
+|-------|-----------|-----------|
+| 1 | **Cockpit interior** (camera inside car + steering wheel + dashboard) | User's explicit priority |
+| 2 | **CanvasLayer HUD** (speed, steering, controls hint, finish button) | Needed for driver feedback |
+| 3 | **Third-person drift camera** (toggleable with C key) | Secondary camera mode |
+| 4 | **Improved physics feel** (drift, weight transfer, tunable exports) | Makes driving fun |
+| 5 | **WorldEnvironment** (sky, fog, lighting) | Final visual polish |
+
+### 9.3 Milestone details
+
+**M1 — Cockpit interior (FIRST):**
+- Camera positioned at driver's eye level: `~(0.6, 0.5, 0.3)` relative to car center
+- Steering wheel mesh (TorusMesh or CylinderMesh) visible from cockpit view
+- Steering wheel rotates with input: `Rotation.X = steeringAngle * 2`
+- Dashboard mesh visible in front of driver (placeholder for future gauges)
+- Driver seat mesh visible in peripheral view
+- Single collision shape covers the car exterior (unchanged from P0)
+- Third-person camera and toggle are NOT implemented yet (M3)
+
+**M2 — HUD:**
+- Speed label (top-right): "Speed: 45 km/h"
+- Steering bar (bottom-center): shows current steering angle
+- Controls hint (bottom): "WASD: drive | SPACE: brake | F: finish"
+- Finish Simulation button (top-right): POSTs `/api/trainee/sessions/{id}/finish` then quits
+- Session info (top-left): session ID + status
+
+**M3 — Third-person drift camera:**
+- Smooth follow with lerp (configurable: `DistanceBehind`, `HeightAbove`, `Smoothing`)
+- Look-ahead: camera rotates toward velocity direction
+- Drift lean: lateral offset when the car slides
+- Toggle with `C` key between cockpit/third-person
+- Spring arm collision detection (RayCast-based, basic)
+
+**M4 — Physics feel (tunable exported properties):**
+- Lift-off oversteer: release accelerator while turning → drift initiates
+- PID-style regulation: angular velocity + drift angle + lateral forces
+- Weight transfer pitch on accel/brake, roll on steering
+- Speed-sensitive steering reduction
+- Key exports: `EnginePower`, `SteeringTorque`, `GripFactor`, `OmegaMax`, `OmegaMaxDrift`
+
+**M5 — Environment:**
+- WorldEnvironment with ProceduralSkyMaterial (gradient sky)
+- Fog for atmosphere
+- More/improved obstacles
+- Improved lighting
+
+### 9.5 Architecture boundaries
+
+| Concern | Boundary | Must NOT leak into |
+|---------|----------|--------------------|
+| Cockpit camera | Camera3D child of Car, fixed transform | BackendClient, telemetry contracts |
+| Third-person camera math | Pure class or CameraPivot script | BackendClient, telemetry contracts |
+| HUD | CanvasLayer + script reading VehicleController properties | BackendClient, telemetry pipeline |
+| Physics tuning | Exported properties on VehicleController | Hardcoded magic numbers in code |
+| Vehicle model | TSCN scene with MeshInstance3D children | Code logic |
+| Telemetry | Unchanged (see `godot-telemetry-hal` skill) | Camera, HUD, physics feel |
+
+### 9.6 Acceptance criteria (P2)
+
+**M1 — Cockpit interior:**
+- [x] Cockpit camera is the default view when the scene loads
+- [x] Camera is at driver's eye level ~(0.6, 0.5, 0.3) from car center
+- [x] Steering wheel mesh visible and rotates with steering input
+- [x] Dashboard mesh visible in front of driver
+- [x] All exterior meshes still present; telemetry/session unchanged
+
+**M2 — HUD:**
+- [ ] HUD shows speed (km/h), steering indicator, controls, and Finish button
+- [ ] Finish button ends the session via API and closes Godot
+
+**M3 — Third-person camera:**
+- [ ] Camera follows smoothly with no jitter and drifts/leans on slides
+- [ ] `C` key toggles between cockpit and third-person view
+
+**M4 — Physics:**
+- [ ] Physics feels more arcade-like; drift is achievable and recoverable
+- [ ] All tunable values are exported properties
+
+**M5 — Environment:**
+- [ ] WorldEnvironment with sky and fog present
+
+**Global:**
+- [ ] All 120/120 existing tests still pass
+- [ ] Existing telemetry, session lifecycle, and BackendClient unchanged
+
+---
+
 ## 7. Error / Edge Case Flows
 
 ### 7.1 Invalid credentials

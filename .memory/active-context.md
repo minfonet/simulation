@@ -5,13 +5,15 @@
 Backend scaffolding complete.
 Frontend scaffolding (Next.js 16 + Tailwind v4) complete.
 Godot simulation scaffolding complete.
-Documentation updated (user-flows.md, role-based-ui.md, run-and-debug.md, architecture-review.md).
+Documentation updated (user-flows.md, role-based-ui.md, run-and-debug.md, architecture-review.md, flow-gap-plan.md, execution-readiness.md).
 Flow compliance audit completed for Admin → Instructor/Evaluator → Trainee/Evaluated path (2026-05-28).
 Flow gap and agent/skill readiness documentation completed (2026-05-28).
 English-only project artifact policy added and recent Spanish documentation/memory translated (2026-05-28).
-Five opencode project skills created, reviewed, and QA-validated (2026-05-28).
+Six opencode project skills created, reviewed, and QA-validated (2026-05-28).
 P0 milestone completed (2026-05-28): base scenario preset with backend validation + frontend selector, Godot launch handoff with sessionId/apiUrl/token, all 85 tests passing.
 P1 milestone completed (2026-05-28): CriticalEvent model with ITelemetryIngestor/ITelemetryStore boundaries, auto-generation of critical events from collisions, basic final report endpoints (Instructor + Trainee) with telemetry summary and evaluation info, frontend report display on completed session pages, all 101 tests passing.
+P2 milestone defined (2026-05-29): Driving experience enhancement. **Priority order**: (1) Cockpit interior with driver's-eye camera, steering wheel, dashboard; (2) HUD; (3) Third-person drift camera toggle; (4) Improved physics feel; (5) WorldEnvironment. Skill `godot-driving-experience` created with external references (Rembot Games video series + DriftCarG4 GitHub repo). See `docs/01-product/user-flows.md` §9 for full scope.
+**P2 M1 complete (2026-05-29):** Cockpit interior with CameraCockpit at (0.6, 0.5, 0.3), TorusMesh steering wheel with Y-axis rotation animation, BoxMesh dashboard/seat/column, all 12/12 Godot tests pass, BackendClient untouched.
 
 ## MVP Reference
 
@@ -20,7 +22,7 @@ See `docs/01-product/flow-gap-plan.md` for the gap analysis (P0/P1 delivered, re
 See `docs/01-product/execution-readiness.md` for a per-flow analysis of what's ready to execute vs pending.
 See `docs/03-ai-system/agent-skill-readiness.md` for the current agent readiness assessment and proposed project skills.
 See `docs/06-engineering/language-policy.md` for the mandatory English-only policy for repository artifacts.
-See `.opencode/skills/` for the five project skills (simulation-domain, godot-telemetry-hal, backend-telemetry-reporting, nextjs-role-ui, qa-e2e-simulation); restart opencode to load them.
+See `.opencode/skills/` for the six project skills (simulation-domain, godot-telemetry-hal, backend-telemetry-reporting, nextjs-role-ui, qa-e2e-simulation, godot-driving-experience); restart opencode to load them.
 
 ## Workflow Rules (mandatory)
 
@@ -63,6 +65,16 @@ Exceptions (LEAD may implement directly): trivial single-file changes under 10 l
 9. ✅ Godot driving simulation
 10. ✅ Integration tests — backend 50/50, Godot 12/12, E2E smoke script corrected
 
+## Implementation Plan (Phase 2 — Driving Experience)
+
+**Priority order: cockpit first.** See `godot-driving-experience` skill for details.
+
+1. ✅ **M1 — Cockpit interior:** Camera at driver's eye level ~(0.6, 0.5, 0.3), steering wheel mesh (TorusMesh, Y-axis rotation), dashboard, driver seat. Default view. Steering wheel animation preserves base X rotation (1.5708) and applies steering on Y axis.
+2. ❌ **M2 — CanvasLayer HUD:** Speed, steering, controls hint, Finish button → BackendClient.FinishSession()
+3. ❌ **M3 — Third-person drift camera:** Smooth follow, look-ahead, lean, toggleable with C key
+4. ❌ **M4 — Improved physics:** Lift-off oversteer, PID-style regulation, weight transfer, tunable exports
+5. ❌ **M5 — WorldEnvironment:** ProceduralSkyMaterial, fog, lighting
+
 ## Scaffolding Created
 
 | File | Purpose |
@@ -99,6 +111,7 @@ Exceptions (LEAD may implement directly): trivial single-file changes under 10 l
 | `simulation/driving-sim/Scripts/VehicleController.cs` | Car physics, WASD+space, telemetry collection |
 | `simulation/driving-sim/Scripts/BackendClient.cs` | HTTP client: start session, batch telemetry, finish |
 | `simulation/driving-sim/Scenes/Main.tscn` | Main scene: ground, car, camera, obstacles |
+| `.opencode/skills/godot-driving-experience/SKILL.md` | Skill: drift camera, HUD, vehicle model, physics feel (P2) |
 
 ## Open Findings (from architecture review)
 
@@ -123,33 +136,35 @@ Architecture risks observed during the audit:
 - Control input currently reads Godot `Input` directly; HAL abstraction is still pending before adding more control types.
 - Backend/Godot telemetry contracts are duplicated and only partially covered by compatibility tests; report/critical-event contracts are now explicit and versionable (CriticalEvent model, SessionReportResponse DTO, contract tests via integration tests).
 
-## Flow Gap Documentation — 2026-05-28
+## Flow Gap Documentation — 2026-05-28/29
 
 Completed documentation updates:
 
-- `docs/01-product/user-flows.md` now includes the target requested evaluation flow, current-state comparison, acceptance criteria, and boundary requirements.
-- `docs/01-product/flow-gap-plan.md` documents prioritized MVP gaps: base scenario preset, Godot launch handoff, Godot auth/token strategy, critical events, basic final report, missing tests, and incremental boundary refactors.
-- `docs/03-ai-system/agent-skill-readiness.md` concludes current agents can execute P0 work if Lead delegates with explicit criteria, but project skills should be created before P1 telemetry/reporting and repeated sensitive tasks. All five recommended skills have been created at `.opencode/skills/`.
-- `docs/01-product/mdvp.md` now aligns with the requested no mandatory time limit for the simulation test.
+- `docs/01-product/user-flows.md` now includes the target requested evaluation flow, current-state comparison, acceptance criteria, and boundary requirements. Also includes §9 In-Simulation Driving Experience (P2 scope).
+- `docs/01-product/flow-gap-plan.md` documents prioritized MVP gaps: base scenario preset, Godot launch handoff, Godot auth/token strategy, critical events, basic final report, missing tests, incremental boundary refactors. P2 row added for Driving Experience.
+- `docs/03-ai-system/agent-skill-readiness.md` concludes current agents can execute P0 work if Lead delegates with explicit criteria, but project skills should be created before P1 telemetry/reporting and repeated sensitive tasks. All six recommended skills have been created at `.opencode/skills/`.
+- `docs/01-product/mdvp.md` now aligns with the requested no mandatory time limit for the simulation test. Enhanced scene description added for P2.
 - `docs/06-engineering/language-policy.md` now defines the mandatory English-only policy for repository artifacts.
+- `docs/01-product/execution-readiness.md` updated with Flow 6 (Driving Experience) — status ❌ NOT STARTED.
 
 Review/QA status:
 
 - REVIEWER: PASS, Architecture Gate PASS.
 - QA: PASS, Architecture Boundary Coverage PASS; no runtime tests needed for documentation-only milestone.
 
-Five project skills created and validated (2026-05-28):
+Six project skills created and validated (2026-05-28/29):
 
 - REVIEWER: PASS, Architecture Gate PASS (skills are correctly structured and enforce guardrails).
 - QA: 30/30 static checks PASS, Architecture Boundary Coverage PASS, no Spanish content found.
 - Created `.memory/memories/learnings/mem_opencode_skill_restart_required.md` noting opencode must be restarted to load skills.
+- Sixth skill added 2026-05-29: `godot-driving-experience` (drift camera, HUD, vehicle model, physics feel).
 
 ## Memory State
 
 | Area | Files | Status |
 |---|---|---|
 | `active-context.md` | 1 | Current |
-| `sessions/` | 19 entries (P0, P1, E2E execution, dashboards, signup form, etc.) | Complete for documented milestones |
+| `sessions/` | 22 entries (P0, P1, E2E execution, dashboards, signup form, driving experience skill creation, P2 M1 cockpit interior) | Complete for documented milestones |
 | `memories/decisions/` | 10 (auth JWT, Docker Compose, EF Core EnsureCreated, Next.js 16 proxy, localStorage auth, workflow enforcement, SQLite in-memory tests, Testing WebApplicationFactory, English-only artifacts, Admin self-registration signup) | Covers all key decisions |
 | `memories/bugs/` | 10 (proxy vs localStorage, ContactMonitor, DI inconsistency, parallel test race, JSON camelCase, JsonElement IConvertible, missing jti, telemetry auth cleared, E2E bootstrap/auth header, Godot telemetry JSON contract) | Documents all review + test findings |
 | `memories/learnings/` | 7 (Tailwind v4, Next.js 16 changes, Godot 4 C#, xUnit + WebApplicationFactory, opencode skill restart requirement, P1.1 critical events test coverage, xUnit pattern notes) | Captures framework-specific lessons |
@@ -207,15 +222,23 @@ Five project skills created and validated (2026-05-28):
 - Session/evaluation controllers still use direct EF access (documented debt for P2)
 - Godot input/telemetry/backend responsibilities are still concentrated in `VehicleController`/`BackendClient`; HAL and adapter extraction remain pending
 - ✅ P1: Telemetry boundaries extracted (ITelemetryIngestor/ITelemetryStore), CriticalEvent model with auto-generation, report endpoints exist for both Instructor and Trainee, frontend displays report on completed session pages
-- ✅ Five opencode project skills created (.opencode/skills/); restart opencode to load them
+- ✅ Six opencode project skills created (.opencode/skills/); restart opencode to load them
 - ✅ Bootstrap org auto-seeded in Program.cs; no manual seeding required
 - ✅ Signup/Signin toggle on login page; first Admin registers from browser
+- ✅ P2 M1 (cockpit interior) complete — Interior node with meshes, CameraCockpit at (0.6, 0.5, 0.3), steering wheel Y-axis rotation, 12/12 Godot tests pass, BackendClient untouched
+- ❌ P2 M2 (HUD) — CanvasLayer with speed label, steering bar, controls hint, Finish button → BackendClient.FinishSession()
+- P2 driving experience depends on existing Main.tscn, VehicleController, BackendClient; must not break telemetry/session lifecycle
+- HUD Finish button must call BackendClient.FinishSession() correctly; error handling needed
+- External references available: Rembot Games video series (drift camera + driver physics) + DriftCarG4 GitHub repo (first/third person cameras, PID controllers)
 
 ## Current Focus
 
-**All milestones complete.** Backend auto-seeds bootstrap org on startup. Login page has Signup/Signin toggle. First Admin registers from browser, then creates orgs and invites users from the Admin panel. E2E smoke test executed successfully against live Docker Compose — 19/19 passing. Dashboards improved for all 3 roles. Signup form added to login page (Admin self-registration from browser). Bootstrap org auto-seeded in Program.cs (no manual seeding needed). Comprehensive README.md with run/debug instructions. Tests: 101 unit/integration + 19 E2E = **120/120 all passing**.
+**P0/P1 complete. P2 M1 (Cockpit Interior) complete.** Backend auto-seeds bootstrap org on startup. Login page has Signup/Signin toggle. First Admin registers from browser, then creates orgs and invites users from the Admin panel. E2E smoke test executed successfully against live Docker Compose — 19/19 passing. Dashboards improved for all 3 roles. Comprehensive README.md with run/debug instructions. Tests: **120/120 all passing**.
 
-Known gaps: frontend page component tests (pre-existing), pre-existing TypeScript errors in test-only files do not affect build or tests. Restart opencode to load skills before new work.
+**P2 M1 completed** (2026-05-29): Cockpit interior with CameraCockpit at (0.6, 0.5, 0.3), TorusMesh steering wheel (Y-axis rotation), BoxMesh dashboard/seat/column, all existing nodes preserved, BackendClient untouched, 12/12 Godot tests pass.
+**P2 M2 (next):** CanvasLayer HUD with speed label, steering bar, controls hint, Finish button → BackendClient.FinishSession().
+
+Known gaps: frontend page component tests (pre-existing), pre-existing TypeScript errors in test-only files do not affect build or tests. Restart opencode to load all 6 skills before new work.
 
 ## Open Tasks
 
@@ -239,6 +262,7 @@ Known gaps: frontend page component tests (pre-existing), pre-existing TypeScrip
 - [x] Extract ITelemetryIngestor/ITelemetryStore boundaries for telemetry work — P1.1 complete
 - [x] Add frontend report display for Instructor and Trainee — P1.3 complete
 - [x] Create five project skills (.opencode/skills/) — simulation-domain, godot-telemetry-hal, backend-telemetry-reporting, nextjs-role-ui, qa-e2e-simulation
+- [x] Create sixth project skill: godot-driving-experience (drift camera, HUD, vehicle model, physics feel)
 - [x] Fix E2E smoke script: `"smoke-test"` → `"default"` at line 227
 - [x] Extend E2E smoke script: add critical events + report validation steps (6 new steps, now 19 total)
 - [x] Execute E2E smoke test against live Docker Compose — 19/19 PASS
@@ -246,6 +270,14 @@ Known gaps: frontend page component tests (pre-existing), pre-existing TypeScrip
 - [x] Write comprehensive README.md with run/debug instructions, use cases, MVP scope
 - [x] Add auto-seed bootstrap org in Program.cs (no manual DB seeding needed)
 - [x] Add signup/signin toggle on login page (Admin self-registration from browser)
+- [x] Fix launch card: add `--path` to Godot command + download script auto-detects project.godot
 - [ ] Fix pre-existing TypeScript errors in test-only files (4 errors in `api.test.ts`)
 - [ ] Frontend page component tests (admin, instructor, trainee pages) — known gap
-- [ ] Restart opencode to load new skills before starting new work
+- [ ] Restart opencode to load all 6 skills before starting new work
+- [x] P2 M1: Cockpit interior (driver's-eye camera at ~0.6,0.5,0.3, steering wheel mesh, dashboard, driver seat) — default view
+- [ ] P2 M2: CanvasLayer HUD (speed label, steering bar, controls hint, finish button → BackendClient.FinishSession())
+- [ ] P2 M3: Third-person drift camera (smooth follow, look-ahead, drift lean, exported properties, C toggle)
+- [ ] P2 M4: Improved physics feel (lift-off oversteer, PID-style regulation, weight transfer, tunable exports)
+- [ ] P2 M5: WorldEnvironment (ProceduralSkyMaterial, fog, improved lighting)
+- [x] P2 M1: Smoke test — 120/120 tests still passing, build clean, architecture gate PASS
+- [ ] P2 M2→M5: Smoke test after each milestone — verify 120/120 tests still passing + visual validation in Godot

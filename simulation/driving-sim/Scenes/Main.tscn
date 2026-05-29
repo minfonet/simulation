@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://drivingsim_main"]
+[gd_scene load_steps=20 format=3 uid="uid://drivingsim_main"]
 
 [ext_resource type="Script" path="res://Scripts/VehicleController.cs" id="1"]
 
@@ -26,6 +26,37 @@ size = Vector3(1.5, 1.5, 1.5)
 [sub_resource type="BoxShape3D" id="9"]
 size = Vector3(1.5, 1.5, 1.5)
 
+[sub_resource type="StandardMaterial3D" id="10"]
+albedo_color = Color(0.23, 0.29, 0.23, 1)
+
+[sub_resource type="StandardMaterial3D" id="11"]
+albedo_color = Color(0.8, 0.2, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="12"]
+albedo_color = Color(0.8, 0.8, 0.27, 1)
+
+[sub_resource type="StandardMaterial3D" id="13"]
+albedo_color = Color(0.8, 0.55, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="14"]
+albedo_color = Color(0.2, 0.2, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="15"]
+albedo_color = Color(0.15, 0.15, 0.15, 1)
+
+[sub_resource type="TorusMesh" id="16"]
+inner_radius = 0.08
+outer_radius = 0.15
+
+[sub_resource type="BoxMesh" id="17"]
+size = Vector3(0.06, 0.06, 0.2)
+
+[sub_resource type="BoxMesh" id="18"]
+size = Vector3(0.6, 0.08, 0.25)
+
+[sub_resource type="BoxMesh" id="19"]
+size = Vector3(0.5, 0.12, 0.5)
+
 [node name="World" type="Node3D"]
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
@@ -38,6 +69,7 @@ position = Vector3(0, -0.1, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Ground"]
 mesh = SubResource(4)
+material_override = SubResource(10)
 
 [node name="Collision" type="CollisionShape3D" parent="Ground"]
 shape = SubResource(5)
@@ -49,21 +81,53 @@ gravity_scale = 1.0
 
 [node name="BodyMesh" type="MeshInstance3D" parent="Car"]
 mesh = SubResource(2)
+material_override = SubResource(11)
 
 [node name="BodyCollision" type="CollisionShape3D" parent="Car"]
 shape = SubResource(3)
+
+[node name="Interior" type="Node3D" parent="Car"]
+
+[node name="SteeringWheel" type="MeshInstance3D" parent="Car/Interior"]
+mesh = SubResource(16)
+material_override = SubResource(14)
+position = Vector3(0.5, 0.15, 0.25)
+rotation = Vector3(1.5708, 0, 0)
+
+[node name="SteeringColumn" type="MeshInstance3D" parent="Car/Interior"]
+mesh = SubResource(17)
+material_override = SubResource(14)
+position = Vector3(0.5, 0.1, 0.25)
+
+[node name="Dashboard" type="MeshInstance3D" parent="Car/Interior"]
+mesh = SubResource(18)
+material_override = SubResource(15)
+position = Vector3(0.5, 0.1, 0.15)
+
+[node name="DriverSeat" type="MeshInstance3D" parent="Car/Interior"]
+mesh = SubResource(19)
+material_override = SubResource(14)
+position = Vector3(0.4, -0.1, 0)
+
+[node name="CameraCockpit" type="Camera3D" parent="Car"]
+current = true
+position = Vector3(0.6, 0.5, 0.3)
+near = 0.05
+far = 500
+fov = 75.0
 
 [node name="CameraPivot" type="Node3D" parent="Car"]
 position = Vector3(0, 3, 6)
 
 [node name="Camera" type="Camera3D" parent="Car/CameraPivot"]
-current = true
+current = false
 
 [node name="Obstacle1" type="StaticBody3D" parent="."]
 position = Vector3(8, 1, 0)
 
 [node name="Mesh" type="MeshInstance3D" parent="Obstacle1"]
 mesh = SubResource(6)
+material_override = SubResource(12)
 
 [node name="Collision" type="CollisionShape3D" parent="Obstacle1"]
 shape = SubResource(7)
@@ -73,6 +137,7 @@ position = Vector3(-8, 0.75, 5)
 
 [node name="Mesh" type="MeshInstance3D" parent="Obstacle2"]
 mesh = SubResource(8)
+material_override = SubResource(13)
 
 [node name="Collision" type="CollisionShape3D" parent="Obstacle2"]
 shape = SubResource(9)

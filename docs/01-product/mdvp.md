@@ -19,7 +19,7 @@ Without this vertical integration there is no validatable product.
 |---|---|---|
 | **Backend** (ASP.NET Core) | JWT auth + roles (Admin, Instructor, Trainee), CRUD Organizations, CRUD Users, CRUD Sessions, telemetry ingestion, basic evaluation endpoint | TimescaleDB, real-time SignalR, replay, advanced analytics |
 | **Frontend** (Next.js + TS) | Login, Admin Dashboard (manage orgs/users), Instructor Dashboard (create sessions, view trainees, evaluate), Trainee Dashboard (join session, view performance), Profile settings | Hardware config, calibration UI, complex presets |
-| **Simulation** (Godot 4 + C#) | Basic 3D scene with a controllable vehicle (keyboard), telemetry emission (speed, steering, position, collisions), REST backend connection | Physical hardware, AI traffic, weather, multiple scenarios, replay |
+| **Simulation** (Godot 4 + C#) | Basic 3D scene with a controllable vehicle (keyboard), telemetry emission (speed, steering, position, collisions), REST backend connection. P2: enhanced multi-piece vehicle, drift camera, HUD, improved physics feel | Physical hardware, AI traffic, weather, multiple scenarios, replay |
 | **Infrastructure** | Docker Compose with backend + frontend + postgres + godot (headless or build export) | TimescaleDB, advanced orchestration, CDN |
 
 ---
@@ -204,12 +204,20 @@ Comments, CreatedAt
 
 ## 9. Godot MVP Simulation (driving-sim)
 
-### Minimum scene
+### Minimum scene (P0 — basic)
 - Base plane with asphalt texture
 - A vehicle (cube or simple model) with physics
 - Controls: WASD + space (brake)
 - Fixed or following third-person camera
 - Cones or walls as simple obstacles
+
+### Enhanced scene (P2 — driving experience, in priority order)
+1. **Cockpit interior** — driver's-eye camera (fixed at ~0.6, 0.5, 0.3), steering wheel mesh that rotates with input, dashboard mesh, driver seat mesh. **This is the default view.**
+2. **CanvasLayer HUD** — speedometer, steering indicator, controls hint, "Finish Simulation" button
+3. **Third-person drift camera** — smooth follow with drift lean, look-ahead, toggleable with C key
+4. **Improved physics** — lift-off oversteer, PID-style regulation, weight transfer, tunable exported properties
+5. **WorldEnvironment** — sky with ProceduralSkyMaterial, fog, improved lighting
+6. Post-MVP: rear-view mirrors (Viewport-based), approach/walk animation
 
 ### Emitted telemetry
 Every frame (or every N frames):

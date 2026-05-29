@@ -1,8 +1,8 @@
 # Execution Readiness — Flow-by-Flow Analysis
 
-> Last updated: 2026-05-28
+> Last updated: 2026-05-29
 > Current test status: **120/120 passing** (backend 66, frontend 23, Godot 12, E2E 19)
-> Milestones: P0 ✅ | P1 ✅
+> Milestones: P0 ✅ | P1 ✅ | P2 (driving experience) M1 cockpit interior ✅ | M2–M5 ❌
 
 ---
 
@@ -203,6 +203,81 @@ This document analyses each user flow requested for the MVP and determines exact
 
 ---
 
+## Flow 6 — Visual Driving Experience (Godot Enhancement)
+
+### Status: ✅ **M1 complete** (M2–M5 pending)
+
+### Completed: M1 — Cockpit interior
+
+- ✅ Cockpit camera (`CameraCockpit`) is `current=true` at position (0.6, 0.5, 0.3)
+- ✅ Steering wheel mesh (TorusMesh) rotates on Y axis with steering input  
+- ✅ Dashboard and driver seat meshes visible in cockpit view
+- ✅ All exterior meshes preserved; telemetry/session unchanged
+- ✅ BackendClient untouched; 12/12 Godot tests pass; architecture gate PASS
+
+### P2 priority order (mandatory)
+
+| Order | Component | Description | Effort | Dependencies |
+|-------|-----------|-------------|--------|-------------|
+| 1 | **Cockpit interior** | Driver's-eye camera, steering wheel mesh, dashboard, driver seat | 1 session | ✅ **DONE** |
+| 2 | **CanvasLayer HUD** | Speed label, steering bar, controls hint, finish button | 1 session | VehicleController (existing) |
+| 3 | **Third-person drift camera** | Smooth follow, look-ahead, drift lean, exported properties, C toggle | 1 session | VehicleController (existing) |
+| 4 | **Improved physics** | Lift-off oversteer, PID-style regulation, weight transfer, tunable exports | 1 session | VehicleController (existing) |
+| 5 | **WorldEnvironment** | Sky gradient, fog, improved lighting | 30 min | Main.tscn |
+
+### How this integrates with existing flows
+
+- Flow 3 (Trainee launches Godot) → Godot now shows cockpit interior (M1), HUD (M2), third-person toggle (M3)
+- Flow 4 (Telemetry collection) — unchanged, telemetry pipeline remains identical
+- Flow 5 (Report/Evaluation) — unchanged
+- Finish button in HUD calls `BackendClient.FinishSession()` → same API as before
+- All existing tests must continue passing (120/120)
+
+### Acceptance criteria
+
+**M1 — Cockpit interior:**
+- [x] Cockpit camera is the default view when the scene loads
+- [x] Camera is at driver's eye level ~(0.6, 0.5, 0.3) from car center
+- [x] Steering wheel mesh visible and rotates with steering input
+- [x] Dashboard mesh visible in front of driver
+- [x] All exterior meshes still present; telemetry/session unchanged
+
+**M2 — HUD:**
+- [ ] HUD shows speed (km/h), steering angle indicator, and controls hint
+- [ ] HUD has a "Finish Simulation" button that calls `BackendClient.FinishSession()` and exits
+
+**M3 — Third-person camera:**
+- [ ] Camera follows smoothly with no jitter; responds to car velocity direction
+- [ ] Camera drifts/leans laterally when the car slides at speed
+- [ ] Pressing `C` toggles between cockpit and third-person view
+
+**M4 — Physics:**
+- [ ] Physics feel is noticeably more fun/arcade-like (easier to drift, weight transfer visible)
+- [ ] Lift-off oversteer works: release accelerator while turning → drift initiates
+- [ ] All tunable values are exported properties, not hardcoded
+
+**M5 — Environment:**
+- [ ] WorldEnvironment exists with sky and fog effects
+
+**Global:**
+- [ ] Existing telemetry, session lifecycle, and backend communication remain unchanged
+- [ ] No Godot engine APIs leaked into pure classes
+- [ ] 120/120 tests still passing
+
+### How to validate
+
+1. Start Docker Compose + login as Trainee
+2. Start a session → copy Godot launch command
+3. Run Godot with `--session-id`, `--api-url`, `--token`
+4. **M1**: Verify you spawn inside the car — steering wheel and dashboard visible
+5. **M2**: Verify HUD shows speed, steering, and Finish button works
+6. **M3**: Press C to toggle third-person; verify smooth follow and drift lean
+7. **M4**: Drive at speed + steer sharply → verify drift feel
+8. Press Finish button → verify session completes and API confirms
+9. Close Godot → verify report available in browser
+
+---
+
 ## Quick-Start: Full E2E Execution Procedure
 
 To run the **complete end-to-end flow** (all 5 flows) in one session:
@@ -270,6 +345,16 @@ cd ..
 ```
 
 ---
+
+### P2 — Driving Experience (execute in order)
+
+| # | Item | Why | Skill | Effort |
+|---|------|-----|-------|--------|
+| 10 | **Cockpit interior** (driver's-eye camera, steering wheel, dashboard, seat) | User's explicit priority: Trainee inside car | `godot-driving-experience` | 1 session | ✅ **DONE** |
+| 11 | **CanvasLayer HUD** (speed, steering, controls, finish button) | Driver feedback | `godot-driving-experience` | 1 session |
+| 12 | **Third-person drift camera** (smooth follow, look-ahead, lean, C toggle) | Toggleable camera mode | `godot-driving-experience` | 1 session |
+| 13 | **Improved physics** (lift-off oversteer, PID regulation, tunable exports) | Fun driving feel | `godot-driving-experience` | 1 session |
+| 14 | **WorldEnvironment** (sky, fog, lighting) | Visual polish | `godot-driving-experience` | 30 min |
 
 ## Per-Flow Validation Checklist
 

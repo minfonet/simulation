@@ -11,6 +11,9 @@ public partial class VehicleController : RigidBody3D
     [Export] public float SteeringTorque { get; set; } = 120f;
     [Export] public float BrakeForce { get; set; } = 400f;
 
+    public float CurrentSpeed => LinearVelocity.Length();
+    public float CurrentSteering => _steeringAngle;
+
     private float _steeringAngle;
     private bool _collidedThisFrame;
     private int _frameCount;
@@ -88,6 +91,11 @@ public partial class VehicleController : RigidBody3D
 
         CollectTelemetry();
         _frameCount++;
+
+        // Rotate steering wheel based on steering angle
+        var steerWheel = GetNodeOrNull<Node3D>("Interior/SteeringWheel");
+        if (steerWheel != null)
+            steerWheel.Rotation = new Vector3(1.5708f, _steeringAngle * 2f, 0);
     }
 
     private void CollectTelemetry()
